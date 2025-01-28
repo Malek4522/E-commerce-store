@@ -1,0 +1,33 @@
+.label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: var(--paragraph3);
+}
+
+.input {
+    flex: 1;
+    border: none;
+    padding: 0;
+    background: none;
+    min-width: 0;
+
+    &:focus-visible {
+        box-shadow: none;
+    }
+}
+
+.searchIcon {
+    width: 14px;
+    height: 14px;
+}
+
+.clearIcon {
+    cursor: pointer;
+    width: 8px;
+    height: 8px;
+}
+
+.input:placeholder-shown + .clearIcon {
+    display: none;
+}

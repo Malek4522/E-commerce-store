@@ -1,0 +1,20 @@
+.page {
+    padding-top: 100px;
+    width: 100%;
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.content {
+    padding: 30px;
+}
+
+@media (max-width: 768px) {
+    .page {
+        padding-top: 30px;
+    }
+
+    .content {
+        padding: 20px 8px;
+    }
+}

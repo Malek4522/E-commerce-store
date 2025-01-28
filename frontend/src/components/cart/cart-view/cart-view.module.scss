@@ -1,0 +1,72 @@
+.cart {
+    height: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--primary5);
+}
+
+.closeButton {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    cursor: pointer;
+}
+
+/* Fallback for loading, error, and empty cart states */
+.cartFallback {
+    font-size: 20px;
+    min-height: 300px;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    padding: 0 20px;
+}
+
+.cartItems {
+    overflow: auto;
+}
+
+.footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(23, 17, 13, 0.2);
+}
+
+.subtotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 20px;
+}
+
+.subtotalNote {
+    margin: 12px 0;
+    font: var(--paragraph3);
+    color: var(--primary4);
+}
+
+.checkoutButton,
+.viewCartButton {
+    width: 100%;
+}
+
+.viewCartButton {
+    margin-top: 12px;
+}
+
+.secureCheckout {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font: var(--paragraph3);
+}

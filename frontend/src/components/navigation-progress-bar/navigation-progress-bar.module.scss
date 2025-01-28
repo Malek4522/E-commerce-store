@@ -1,0 +1,60 @@
+:where(.progressBar) {
+    --color: #007bff;
+}
+
+.progressBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    pointer-events: none;
+    background-color: var(--color);
+}
+
+.progressBar.loading {
+    animation: loadingAnimation 100s forwards;
+}
+
+.progressBar.finished {
+    /**
+     * By combining the 'loading' and 'finished' animations here, we ensure that
+     * when the .loading class is replaced with the .finished class, the browser
+     * retains the progress of the 'loading' animation, and uses as the starting
+     * point for the 'finished' animation.
+     */
+    animation:
+        loadingAnimation 100s forwards,
+        finishedAnimation 0.3s forwards;
+}
+
+@keyframes loadingAnimation {
+    /** Start quickly to make the progress bar clearly visible */
+    0% {
+        width: 0;
+        animation-timing-function: cubic-bezier(0.55, 0.1, 0.15, 0.9);
+    }
+    0.5% {
+        width: 15%;
+        animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+    }
+    /** Continue gradually, decelerating toward the end and never reaching it */
+    100% {
+        width: 95%;
+    }
+}
+
+@keyframes finishedAnimation {
+    0% {
+        animation-timing-function: ease-out;
+    }
+    50% {
+        opacity: 1;
+    }
+    90% {
+        width: 100%;
+    }
+    100% {
+        opacity: 0;
+    }
+}

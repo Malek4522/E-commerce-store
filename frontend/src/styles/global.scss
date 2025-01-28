@@ -1,0 +1,22 @@
+/**
+ * Global styles that are applied to the entire application.
+ */
+
+:root {
+    font: var(--paragraph1);
+    color: var(--text-color);
+    --pagePaddingHoriz: max(2vw, 15px);
+}
+
+body {
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--page-background-color);
+}
+
+:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 1px #ffffff,
+        0 0 0 3px var(--focus-ring-color);
+}

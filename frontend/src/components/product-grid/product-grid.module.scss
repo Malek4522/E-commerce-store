@@ -1,0 +1,30 @@
+.productGrid {
+    /* The max width must be at least 3/2 of the min width to prevent gaps when
+     * transitioning from 3 to 2 items per row. */
+    --minColumnWidth: 350px;
+    --maxColumnWidth: 540px;
+
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--minColumnWidth), 1fr));
+    gap: 20px 4px;
+}
+
+.productLink {
+    display: block;
+    max-width: var(--maxColumnWidth);
+}
+
+.clearFiltersButton {
+    margin-top: 32px;
+}
+
+.clearFiltersButton:hover {
+    color: rgba(23, 17, 13, 0.7);
+}
+
+@media (max-width: 1024px) {
+    .productGrid {
+        --minColumnWidth: 250px;
+        --maxColumnWidth: 500px;
+    }
+}

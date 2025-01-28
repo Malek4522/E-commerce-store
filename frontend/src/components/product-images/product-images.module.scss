@@ -1,0 +1,53 @@
+.mainImageWrapper {
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e8e6e6;
+}
+
+.mainImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.imagePlaceholderIcon {
+    width: 210px;
+    height: 210px;
+    color: #646464;
+}
+
+.thumbnails {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.thumbnail {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+}
+
+.thumbnail.selected {
+    cursor: default;
+}
+
+.thumbnail.selected::after {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #fff9;
+}
+
+.thumbnailImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

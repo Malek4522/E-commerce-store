@@ -1,0 +1,10 @@
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.labels {
+    display: flex;
+    justify-content: space-between;
+}

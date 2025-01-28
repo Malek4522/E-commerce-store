@@ -1,0 +1,31 @@
+.select {
+    width: 240px;
+    justify-content: end;
+    background: none;
+    border: none;
+    font: var(--paragraph3);
+}
+
+.selectDropdown {
+    padding: 12px 0;
+    border: 1px solid rgba(23, 17, 13, 0.4);
+    background: var(--primary1);
+    box-shadow:
+        0 4px 8px 0 rgba(0, 0, 0, 0.1),
+        0 0 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.selectItem {
+    height: 38px;
+    padding: 8px 24px;
+    font: var(--paragraph3);
+}
+
+.selectItem[data-state='checked'] {
+    background: rgba(23, 17, 13, 0.12);
+}
+
+.selectItem:hover,
+.selectItem:focus {
+    background: rgba(23, 17, 13, 0.06);
+}

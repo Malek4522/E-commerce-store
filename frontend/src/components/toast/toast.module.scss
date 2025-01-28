@@ -1,0 +1,87 @@
+.root {
+    padding: 14px;
+    width: 480px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 14px;
+}
+
+/** Toast type: success */
+.root.success {
+    background-color: #767f53;
+}
+
+/** Toast type: error */
+.root.error {
+    background-color: #df3131;
+}
+
+/** Toast type: unspecified */
+.root.blank {
+    background-color: #7d6283;
+}
+
+/** Toast type: loading */
+.root.loading {
+    width: max-content;
+    min-width: 150px;
+    text-align: center;
+    background-color: #ced0c4;
+    color: #414434;
+}
+
+@media (max-width: 1024px) {
+    .root,
+    .root.loading {
+        width: 100%;
+    }
+}
+
+.message {
+    font: var(--paragraph3);
+    flex-grow: 1;
+    line-height: 24px;
+}
+
+.closeButton {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    flex: none;
+    background: none;
+    color: currentColor;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 0.7;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.enterAnimation {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.exitAnimation {
+    animation: fadeOut 0.5s ease forwards;
+}

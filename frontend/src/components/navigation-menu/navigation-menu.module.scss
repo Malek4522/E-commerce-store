@@ -1,0 +1,23 @@
+.menuList {
+    display: flex;
+    align-items: center;
+    list-style-type: none;
+    padding: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.menuList.vertical {
+    flex-direction: column;
+}
+
+.menuItem {
+    display: block;
+    padding: 14px 18px;
+    white-space: nowrap;
+}
+
+.menuItem:hover,
+.menuItem.active {
+    text-decoration: underline;
+}

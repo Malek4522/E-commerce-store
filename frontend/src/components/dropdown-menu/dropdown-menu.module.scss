@@ -1,0 +1,40 @@
+.trigger {
+    cursor: pointer;
+}
+
+.content {
+    padding: 10px 0;
+    background: var(--primary1);
+    border: 1px solid rgba(23, 17, 13, 0.2);
+    box-shadow: none;
+    max-width: min(var(--radix-dropdown-menu-content-available-width), 400px);
+    max-height: var(--radix-dropdown-menu-content-available-height);
+    overflow: auto;
+}
+
+.item {
+    color: var(--primary5);
+    padding: 5px 20px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    box-shadow: none;
+
+    &[data-highlighted] {
+        background-color: var(--primary3);
+    }
+
+    &[data-disabled] {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+.separator {
+    margin: 5px 20px;
+    height: 1px;
+    border: solid 1px #eee;
+    border-style: inset;
+    opacity: 0.4;
+}

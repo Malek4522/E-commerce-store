@@ -1,0 +1,62 @@
+.root {
+    padding: 30px var(--pagePaddingHoriz);
+    background: var(--primary3);
+}
+
+.navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 10vw;
+    margin-bottom: 50px;
+}
+
+.navList {
+    list-style-type: none;
+    padding: 0;
+}
+
+.navItem {
+    display: block;
+    font-family: var(--heading-font);
+    font-size: 16px;
+    line-height: 2.2;
+    white-space: nowrap;
+}
+
+.navItem.active {
+    color: #5b4b34;
+}
+
+.bottomBar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.logo {
+    font: var(--heading1);
+    line-height: 1;
+    font-size: min(13vw, 100px);
+}
+
+.copyright {
+    font: var(--paragraph3);
+    white-space: nowrap;
+}
+
+.coduxLink {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .navigation {
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+    .navigation {
+        gap: 20px 100px;
+    }
+}

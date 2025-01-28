@@ -1,0 +1,74 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.section {
+    padding-bottom: 30px;
+    margin-bottom: 30px;
+    border-bottom: solid 1px rgba(23, 17, 13, 0.2);
+
+    h2 {
+        padding-bottom: 16px;
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: start;
+}
+
+.updateInfoButton {
+    width: 120px;
+}
+
+.resetPasswordButton {
+    width: 150px;
+}
+
+.userDetailsForm {
+    font: var(--paragraph3);
+    margin: 30px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 60px;
+
+    label {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.loginInfoSection {
+    margin-top: 30px;
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+}
+
+.confirmationDialogBody {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+@media (max-width: 480px) {
+    .section {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .actions {
+        justify-content: start;
+    }
+
+    .loginInfoSection {
+        align-items: center;
+    }
+
+    .userDetailsForm {
+        grid-template-columns: 1fr;
+    }
+}

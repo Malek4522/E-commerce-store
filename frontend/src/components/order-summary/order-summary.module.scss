@@ -1,0 +1,79 @@
+.root {
+    width: 100%;
+}
+
+.divider {
+    border-bottom: 1px solid var(--secondary1);
+    margin: 20px 0;
+}
+
+.divider.dashed {
+    border-bottom-style: dashed;
+}
+
+.orderItems {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.note {
+    font: var(--paragraph3);
+    color: var(--secondary3);
+}
+
+.priceSummary {
+    grid-column: 2;
+}
+
+.priceDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font: var(--paragraph3);
+}
+
+.priceRow {
+    display: flex;
+    justify-content: space-between;
+}
+
+.totalPrice {
+    font-size: 20px;
+}
+
+.addressSection {
+    margin-top: 32px;
+    display: flex;
+    gap: 64px;
+}
+
+.addressData {
+    font: var(--paragraph3);
+    margin-top: 16px;
+}
+
+.deliveryTime {
+    margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+    .summary {
+        grid-template-columns: 1fr;
+    }
+
+    .priceSummary {
+        grid-column: auto;
+    }
+
+    .addressSection {
+        flex-direction: column;
+        gap: 24px;
+    }
+}

@@ -1,0 +1,53 @@
+:where(.root) {
+    --thumb-size: 12px;
+    --track-height: 2px;
+    --track-color: #b2b2b2;
+    --range-color: #0175ff;
+    --thumb-color: #0175ff;
+    --focus-ring-color: #0175ff;
+}
+
+.root {
+    position: relative;
+    width: 100%;
+    height: var(--thumb-size);
+    display: flex;
+    align-items: center;
+    user-select: none;
+    touch-action: none;
+    cursor: pointer;
+}
+
+.root[data-disabled] {
+    filter: grayscale(1);
+    opacity: 0.5;
+    cursor: default;
+}
+
+.track {
+    position: relative;
+    flex-grow: 1;
+    height: var(--track-height);
+    border-radius: 999px;
+    background-color: var(--track-color);
+}
+
+.range {
+    position: absolute;
+    background-color: var(--range-color);
+    border-radius: 999px;
+    height: 100%;
+}
+
+.thumb {
+    display: block;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    background-color: var(--thumb-color);
+    border-radius: 999px;
+}
+
+.thumb:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 1px;
+}

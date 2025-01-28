@@ -1,0 +1,56 @@
+.item:not(:last-child) {
+    border-bottom: 1px solid rgba(118, 113, 101, 0.3);
+}
+
+.header {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.headerContent {
+    flex-grow: 1;
+}
+
+.toggleIconContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: 4px;
+}
+
+.collapseIcon {
+    transform: rotate(180deg);
+}
+
+.content {
+    --transitionDuration: 0.4s;
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--transitionDuration) ease-in-out;
+}
+
+.expanded {
+    grid-template-rows: 1fr;
+}
+
+.contentExpander {
+    overflow: auto;
+    transition: overflow 0s allow-discrete;
+}
+
+.expanded .contentExpander {
+    // Prevent clipping outline and box-shadow after transition.
+    overflow: visible;
+    transition-delay: var(--transitionDuration);
+}
+
+.contentInner {
+    padding-bottom: 25px;
+}
+
+.small .contentInner {
+    padding-bottom: 16px;
+}

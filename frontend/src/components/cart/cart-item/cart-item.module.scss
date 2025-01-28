@@ -1,0 +1,142 @@
+.root {
+    position: relative;
+    padding: 20px 0;
+    container-type: inline-size;
+}
+
+.itemContent {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    column-gap: 20px;
+    align-items: start;
+}
+
+.root:not(:first-child) {
+    border-top: 1px solid rgba(23, 17, 13, 0.2);
+}
+
+.imageWrapper {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.imagePlaceholder {
+    height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.imagePlaceholderIcon {
+    color: #fff;
+    width: 37px;
+    height: 37px;
+}
+
+.productInfo {
+    display: grid;
+    width: 100%;
+    min-width: 200px;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    grid-template-areas: 'productNameAndPrice  quantity priceBreakdown removeButton';
+    gap: 10px;
+}
+
+.productNameAndPrice {
+    grid-area: productNameAndPrice;
+}
+
+.productName {
+    margin-bottom: 10px;
+}
+
+.options {
+    margin-top: 4px;
+}
+
+.price {
+    grid-area: price;
+}
+
+.quantity {
+    grid-area: quantity;
+    justify-self: center;
+}
+
+.priceBreakdown {
+    grid-area: priceBreakdown;
+    justify-self: center;
+}
+
+.removeButton {
+    grid-area: removeButton;
+    justify-self: end;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    cursor: pointer;
+}
+
+.root .quantityInput {
+    width: 96px;
+    height: 32px;
+    border-color: var(--primary5);
+}
+
+.root .quantityInput button {
+    width: 32px;
+}
+
+.root .quantityInputDisabled {
+    border-color: var(--primary3);
+}
+
+.root.loading {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.unavailableIndication {
+    margin-top: 30px;
+    height: 50px;
+    padding: 9px 16px 9px 12px;
+    display: flex;
+    align-items: center;
+    column-gap: 4px;
+    background: #fceaea;
+    font: var(--paragraph3);
+}
+
+.unavailableIcon {
+    color: var(--error-color);
+    width: 20px;
+    height: 20px;
+}
+
+@container (max-width: 600px) {
+    .itemContent {
+        grid-template-columns: 75px 1fr;
+    }
+
+    .productInfo {
+        grid-template-columns: 3fr 3fr 1fr;
+        grid-template-areas:
+            'productNameAndPrice productNameAndPrice removeButton'
+            'quantity             priceBreakdown   priceBreakdown';
+    }
+
+    .quantity {
+        justify-self: start;
+    }
+
+    .priceBreakdown {
+        justify-self: end;
+    }
+}
