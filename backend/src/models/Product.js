@@ -46,8 +46,11 @@ const productSchema = new mongoose.Schema({
         default: 0,
         min: 0,
         max: 100
-    }
-    ,
+    },
+    isNew: {
+        type: Boolean,
+        default: false
+    },
     links: [{
         url: {
             type: String,
