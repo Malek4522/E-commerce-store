@@ -59,7 +59,7 @@ const productSchema = new mongoose.Schema({
         type: {
             type: String,
             required: true,
-            enum: ['youtube', 'drive'],
+            enum: ['video', 'image'],
             trim: true
         }
     }]
