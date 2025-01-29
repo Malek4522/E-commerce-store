@@ -3,6 +3,14 @@ import { useState, useCallback } from 'react';
 import type { Product, ProductVariant, ProductLink } from '../../types/product';
 import styles from './route.module.scss';
 
+const IMGBB_API_KEY = "d70392dd5af4640814b4b07ef4761aa0";
+
+// Utility functions
+const getYouTubeVideoId = (url: string) => {
+    const match = url.match(/[?&]v=([^&]+)/);
+    return match ? match[1] : null;
+};
+
 // Media Preview Modal Component
 function MediaPreviewModal({ 
     media, 
@@ -129,6 +137,9 @@ function EditProductModal({
     const [editedProduct, setEditedProduct] = useState<Product>(product);
     const [newColor, setNewColor] = useState('');
     const [newSize, setNewSize] = useState('');
+    const [uploading, setUploading] = useState(false);
+    const [newVideoUrl, setNewVideoUrl] = useState('');
+    const [draggedItem, setDraggedItem] = useState<number | null>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -209,6 +220,77 @@ function EditProductModal({
             variants: prev.variants.filter(v => v.size !== sizeToRemove),
             sizes: prev.sizes.filter(s => s !== sizeToRemove)
         }));
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setUploading(true);
+        const uploadPromises = Array.from(files).map(async (file) => {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const newImage: ProductLink = {
+                        url: data.data.url,
+                        type: 'image'
+                    };
+                    return newImage;
+                }
+                return null;
+            } catch (error) {
+                console.error('Upload failed:', error);
+                return null;
+            }
+        });
+
+        const results = await Promise.all(uploadPromises);
+        const uploadedImages = results.filter((img): img is ProductLink => img !== null);
+        
+        setEditedProduct(prev => ({
+            ...prev,
+            links: [...prev.links, ...uploadedImages]
+        }));
+        setUploading(false);
+    };
+
+    const handleAddVideo = () => {
+        if (!newVideoUrl.trim() || !newVideoUrl.includes('youtube.com')) return;
+
+        const newVideo: ProductLink = { url: newVideoUrl, type: 'video' };
+        setEditedProduct(prev => ({
+            ...prev,
+            links: [...prev.links, newVideo]
+        }));
+        setNewVideoUrl('');
+    };
+
+    const handleRemoveMedia = (index: number) => {
+        setEditedProduct(prev => ({
+            ...prev,
+            links: prev.links.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleMoveMedia = (fromIndex: number, direction: 'up' | 'down') => {
+        const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+        
+        if (toIndex < 0 || toIndex >= editedProduct.links.length) return;
+        
+        setEditedProduct(prev => {
+            const newLinks = [...prev.links];
+            const [movedItem] = newLinks.splice(fromIndex, 1);
+            newLinks.splice(toIndex, 0, movedItem);
+            return { ...prev, links: newLinks };
+        });
     };
 
     // Get unique colors and sizes
@@ -383,6 +465,89 @@ function EditProductModal({
                             </tbody>
                         </table>
                     </div>
+                    <div className={styles.formGroup}>
+                        <label>Media:</label>
+                        <div className={styles.mediaUploadSection}>
+                            <div className={styles.mediaInputs}>
+                                <div className={styles.imageUpload}>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleImageUpload}
+                                        disabled={uploading}
+                                        id="imageUpload"
+                                    />
+                                    <label htmlFor="imageUpload" className={styles.uploadButton}>
+                                        {uploading ? 'Uploading...' : 'Upload Images'}
+                                    </label>
+                                </div>
+                                <div className={styles.videoInput}>
+                                    <input
+                                        type="text"
+                                        value={newVideoUrl}
+                                        onChange={e => setNewVideoUrl(e.target.value)}
+                                        placeholder="YouTube video URL..."
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleAddVideo}
+                                        className={styles.addVideoButton}
+                                    >
+                                        Add Video
+                                    </button>
+                                </div>
+                            </div>
+                            <div className={styles.mediaPreview}>
+                                {editedProduct.links.map((media, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={styles.mediaItem}
+                                    >
+                                        {media.type === 'image' ? (
+                                            <img src={media.url} alt={`Product ${index + 1}`} />
+                                        ) : (
+                                            <div className={styles.videoPreview}>
+                                                <img 
+                                                    src={`https://img.youtube.com/vi/${getYouTubeVideoId(media.url)}/default.jpg`}
+                                                    alt="Video thumbnail"
+                                                />
+                                                <span className={styles.playIcon}>▶</span>
+                                            </div>
+                                        )}
+                                        <div className={styles.mediaControls}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleMoveMedia(index, 'up')}
+                                                className={styles.moveButton}
+                                                disabled={index === 0}
+                                                title="Move up"
+                                            >
+                                                ↑
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleMoveMedia(index, 'down')}
+                                                className={styles.moveButton}
+                                                disabled={index === editedProduct.links.length - 1}
+                                                title="Move down"
+                                            >
+                                                ↓
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveMedia(index)}
+                                                className={styles.removeMedia}
+                                                title="Remove"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                     <div className={styles.formActions}>
                         <button 
                             type="button" 
@@ -505,11 +670,6 @@ export default function AdminProducts() {
 
     const getTotalStock = (variants: ProductVariant[]) => {
         return variants.reduce((sum: number, variant: ProductVariant) => sum + variant.quantity, 0);
-    };
-
-    const getYouTubeVideoId = (url: string) => {
-        const match = url.match(/[?&]v=([^&]+)/);
-        return match ? match[1] : null;
     };
 
     const renderMediaLinks = (links: ProductLink[]) => {
