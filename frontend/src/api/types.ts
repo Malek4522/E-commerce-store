@@ -1,12 +1,17 @@
 // Product types
+export type InventoryStatus = 'IN_STOCK' | 'OUT_OF_STOCK';
+
 export interface Product {
     id: string;
     title: string;
     description: string;
     price: number;
+    discountedPrice?: number;
     images: string[];
     stock: number;
     slug: string;
+    ribbon?: string;
+    inventoryStatus?: InventoryStatus;
 }
 
 export interface ProductVariant {

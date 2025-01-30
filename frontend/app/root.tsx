@@ -22,6 +22,7 @@ import { Toaster } from '~/src/components/toaster/toaster';
 import { CartOpenContextProvider } from '~/src/wix/cart';
 import { EcomApiContextProvider, getWixClientId, setWixClientId } from '~/src/wix/ecom';
 import { commitSession, initializeEcomSession } from '~/src/wix/ecom/session';
+import { CartProvider, ApiProvider } from '~/src/api';
 
 import styles from './root.module.scss';
 
@@ -73,17 +74,21 @@ export default function App() {
     return (
         <EcomApiContextProvider tokens={wixSessionTokens}>
             <CartOpenContextProvider>
-                <div>
-                    <div className={styles.root}>
-                        <Header />
-                        <main className={styles.main}>
-                            <Outlet />
-                        </main>
-                        <Footer />
-                    </div>
-                    <NavigationProgressBar className={styles.navigationProgressBar} />
-                    <Toaster />
-                </div>
+                <ApiProvider>
+                    <CartProvider>
+                        <div>
+                            <div className={styles.root}>
+                                <Header />
+                                <main className={styles.main}>
+                                    <Outlet />
+                                </main>
+                                <Footer />
+                            </div>
+                            <NavigationProgressBar className={styles.navigationProgressBar} />
+                            <Toaster />
+                        </div>
+                    </CartProvider>
+                </ApiProvider>
             </CartOpenContextProvider>
         </EcomApiContextProvider>
     );

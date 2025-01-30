@@ -2,16 +2,14 @@ import classNames from 'classnames';
 import { ReactNode } from 'react';
 import { CrossIcon, LockIcon } from '~/src/components/icons';
 import { Spinner } from '~/src/components/spinner/spinner';
-import { getCartItemCount, findLineItemPriceBreakdown } from '~/src/wix/cart';
-import { type Cart, type CartTotals } from '~/src/wix/ecom';
+import { getCartItemCount } from '~/src/api';
+import type { Cart } from '~/src/api';
 import { CartItem } from '../cart-item/cart-item';
 
 import styles from './cart-view.module.scss';
 
 export interface CartViewProps {
     cart?: Cart;
-    cartTotals?: CartTotals;
-    updatingCartItemIds?: string[];
     error?: string;
     isLoading: boolean;
     isUpdating?: boolean;
@@ -25,8 +23,6 @@ export interface CartViewProps {
 
 export const CartView = ({
     cart,
-    cartTotals,
-    updatingCartItemIds = [],
     error,
     isLoading,
     isUpdating = false,
@@ -62,21 +58,20 @@ export const CartView = ({
                 </button>
             </div>
 
-            {!cart || cart.lineItems.length === 0 ? (
+            {!cart || cart.items.length === 0 ? (
                 <CartFallback>Your cart is empty.</CartFallback>
             ) : (
                 <>
                     <div className={styles.cartItems}>
-                        {cart.lineItems.map((item) => (
+                        {cart.items.map((item) => (
                             <CartItem
-                                key={item._id}
+                                key={item.id}
                                 item={item}
-                                isUpdating={updatingCartItemIds.includes(item._id!)}
-                                priceBreakdown={findLineItemPriceBreakdown(item, cartTotals)}
+                                isUpdating={false}
                                 onQuantityChange={(quantity: number) =>
-                                    onItemQuantityChange({ id: item._id!, quantity })
+                                    onItemQuantityChange({ id: item.id, quantity })
                                 }
-                                onRemove={() => onItemRemove(item._id!)}
+                                onRemove={() => onItemRemove(item.id)}
                             />
                         ))}
                     </div>
@@ -86,7 +81,7 @@ export const CartView = ({
                             <>
                                 <div className={styles.subtotal}>
                                     <span>Subtotal</span>
-                                    <span>{cart.subtotal.formattedConvertedAmount}</span>
+                                    <span>${cart.subtotal.toFixed(2)}</span>
                                 </div>
                                 <div className={styles.subtotalNote}>
                                     Taxes and shipping are calculated at checkout.

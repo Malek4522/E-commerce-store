@@ -1,4 +1,4 @@
-import { ApiClient, Product, Order, OrderItem, CustomerInfo } from './types';
+import { ApiClient, Product, Order, OrderItem, CustomerInfo, Cart } from './types';
 import { CustomApiClient } from './client';
 
 export interface CustomApi {
@@ -10,6 +10,12 @@ export interface CustomApi {
     }): Promise<{ items: Product[]; total: number }>;
     
     getProductBySlug(slug: string): Promise<Product | undefined>;
+
+    // Cart methods
+    getCart(): Promise<Cart | undefined>;
+    addToCart(productId: string, quantity: number): Promise<Cart>;
+    updateCartItem(itemId: string, quantity: number): Promise<Cart>;
+    removeFromCart(itemId: string): Promise<Cart>;
 
     // Order methods
     createOrder(items: OrderItem[], customerInfo: CustomerInfo): Promise<Order>;
@@ -30,6 +36,22 @@ export function createCustomApi(baseUrl?: string): CustomApi {
 
         async getProductBySlug(slug) {
             return client.getProductBySlug(slug);
+        },
+
+        async getCart() {
+            return client.getCart();
+        },
+
+        async addToCart(productId, quantity) {
+            return client.addToCart(productId, quantity);
+        },
+
+        async updateCartItem(itemId, quantity) {
+            return client.updateCartItem(itemId, quantity);
+        },
+
+        async removeFromCart(itemId) {
+            return client.removeFromCart(itemId);
         },
 
         async createOrder(items, customerInfo) {

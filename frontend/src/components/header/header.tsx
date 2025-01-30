@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@remix-run/react';
 import classNames from 'classnames';
 import { useState } from 'react';
 import { MenuIcon } from '~/src/components/icons';
-import { getCartItemCount, useCartData, useCartOpen } from '~/src/wix/cart';
+import { getCartItemCount, useCart } from '~/src/api';
 import { SidebarNavigationMenu } from '../sidebar-navigation-menu/sidebar-navigation-menu';
 
 import styles from './header.module.scss';
@@ -12,15 +12,14 @@ export interface HeaderProps {
 }
 
 export const Header = ({ className }: HeaderProps) => {
-    const cart = useCartData();
-    const cartOpener = useCartOpen();
+    const { cart, isOpen: isCartOpen, setIsOpen: setCartOpen } = useCart();
     const navigate = useNavigate();
 
     const onSearchSubmit = (search: string) => {
         navigate(`/products/all-products?search=${encodeURIComponent(search)}`);
     };
 
-    const cartItemCount = cart.data ? getCartItemCount(cart.data) : 0;
+    const cartItemCount = cart ? getCartItemCount(cart) : 0;
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 

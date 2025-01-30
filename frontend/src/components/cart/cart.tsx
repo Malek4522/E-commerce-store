@@ -1,21 +1,13 @@
 import { useNavigate } from '@remix-run/react';
 import { Drawer } from '~/src/components/drawer/drawer';
 import { toast } from '~/src/components/toast/toast';
-import { useCart, useCartOpen, useCheckout } from '~/src/wix/cart';
-import { getErrorMessage } from '~/src/wix/utils';
+import { useCart, useCartOperations, getErrorMessage } from '~/src/api';
 import { CartView } from './cart-view/cart-view';
 
 export const Cart = () => {
-    const { isOpen, setIsOpen } = useCartOpen();
+    const { cart, isOpen, setIsOpen } = useCart();
+    const { updateCartItem, removeFromCart } = useCartOperations();
     const navigate = useNavigate();
-    const {
-        cart,
-        cartTotals,
-        isCartTotalsUpdating,
-        updatingCartItemIds,
-        removeItem,
-        updateItemQuantity,
-    } = useCart();
 
     const handleError = (error: unknown) =>
         toast.error(getErrorMessage(error), {
@@ -23,11 +15,14 @@ export const Cart = () => {
             style: { width: 400 },
         });
 
-    const { checkout, isCheckoutInProgress } = useCheckout({
-        successUrl: '/thank-you',
-        cancelUrl: '/products/all-products',
-        onError: handleError,
-    });
+    const handleCheckout = async () => {
+        try {
+            // Implement checkout logic here
+            navigate('/thank-you');
+        } catch (error) {
+            handleError(error);
+        }
+    };
 
     const handleViewCart = () => {
         setIsOpen(false);
@@ -37,18 +32,16 @@ export const Cart = () => {
     return (
         <Drawer onClose={() => setIsOpen(false)} open={isOpen}>
             <CartView
-                cart={cart.data}
-                cartTotals={cartTotals}
-                error={cart.error ? getErrorMessage(cart.error) : undefined}
+                cart={cart ?? undefined}
+                error={undefined}
                 onClose={() => setIsOpen(false)}
-                onCheckout={checkout}
+                onCheckout={handleCheckout}
                 onViewCart={handleViewCart}
-                onItemRemove={(id) => removeItem(id).catch(handleError)}
-                onItemQuantityChange={(args) => updateItemQuantity(args).catch(handleError)}
-                isLoading={cart.isLoading}
-                isUpdating={isCartTotalsUpdating}
-                isCheckoutInProgress={isCheckoutInProgress}
-                updatingCartItemIds={updatingCartItemIds}
+                onItemRemove={(id) => removeFromCart(id).catch(handleError)}
+                onItemQuantityChange={({ id, quantity }) => updateCartItem(id, quantity).catch(handleError)}
+                isLoading={false}
+                isUpdating={false}
+                isCheckoutInProgress={false}
             />
         </Drawer>
     );

@@ -1,8 +1,8 @@
 import type { SerializeFrom } from '@remix-run/node';
 import classNames from 'classnames';
 import React from 'react';
-import type { CollectionDetails, Product } from '~/src/wix/ecom';
-import { getProductImageUrl } from '~/src/wix/products';
+import type { Product, InventoryStatus } from '~/src/api';
+import { getProductImageUrl } from '~/src/api';
 import { EmptyProductsCategory } from '../empty-products-category/empty-products-category';
 import { ProductCard } from '../product-card/product-card';
 import { ProductLink } from '../product-link/product-link';
@@ -12,7 +12,11 @@ export interface ProductGridProps {
     /** list of products to show (either from API or serialized from loader) */
     products: Array<Product | SerializeFrom<Product>>;
     /** category containing the shown products */
-    category: CollectionDetails;
+    category: {
+        name: string;
+        slug: string;
+        numberOfProducts: number;
+    };
     /** are there any filters appiled to the passed product list */
     filtersApplied?: boolean;
     /** called when user clicks the "Clear Filters" link (shown when filters applied + no products found)  */
@@ -51,13 +55,24 @@ export const ProductGrid = React.memo<ProductGridProps>(function ProductGrid({
         );
     }
 
+    const formatPrice = (price?: number) => {
+        if (!price) return undefined;
+        return price.toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        });
+    };
+
+    const getInventoryStatus = (stock: number): InventoryStatus => 
+        stock > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK';
+
     return (
         <div className={styles.productGrid}>
             {products.map((product) => (
                 <ProductLink
-                    key={product._id}
+                    key={product.id}
                     className={styles.productLink}
-                    productSlug={product.slug!}
+                    productSlug={product.slug}
                     state={{
                         fromCategory: {
                             name: category.name,
@@ -66,12 +81,12 @@ export const ProductGrid = React.memo<ProductGridProps>(function ProductGrid({
                     }}
                 >
                     <ProductCard
-                        name={product.name!}
-                        imageUrl={getProductImageUrl(product, { minWidth: 540, minHeight: 720 })}
-                        price={product.priceData?.formatted?.price}
-                        discountedPrice={product.priceData?.formatted?.discountedPrice}
-                        ribbon={product.ribbon ?? undefined}
-                        inventoryStatus={product.stock?.inventoryStatus}
+                        name={product.title}
+                        imageUrl={getProductImageUrl(product)}
+                        price={formatPrice(product.price)}
+                        discountedPrice={formatPrice(product.discountedPrice)}
+                        ribbon={product.ribbon}
+                        inventoryStatus={getInventoryStatus(product.stock)}
                     />
                 </ProductLink>
             ))}

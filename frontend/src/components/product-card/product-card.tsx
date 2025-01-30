@@ -1,4 +1,4 @@
-import { products } from '@wix/stores';
+import type { InventoryStatus } from '~/src/api';
 import styles from './product-card.module.scss';
 import { ProductPrice } from '../product-price/product-price';
 import { ImagePlaceholderIcon } from '../icons';
@@ -17,7 +17,7 @@ interface ProductCardProps {
      */
     discountedPrice?: string;
     ribbon?: string;
-    inventoryStatus?: products.InventoryStatus;
+    inventoryStatus?: InventoryStatus;
 }
 
 export const ProductCard = ({
@@ -42,7 +42,7 @@ export const ProductCard = ({
 
             <div className={styles.name}>{name}</div>
 
-            {inventoryStatus === products.InventoryStatus.OUT_OF_STOCK ? (
+            {inventoryStatus === 'OUT_OF_STOCK' ? (
                 <div className={styles.outOfStock}>Out of stock</div>
             ) : (
                 <ProductPrice
