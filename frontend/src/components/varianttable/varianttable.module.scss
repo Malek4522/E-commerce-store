@@ -1,0 +1,18 @@
+.root {
+}
+
+.grid {
+    display: grid;
+    gap: 20px;
+    grid-auto-flow: row;
+    grid-template-areas: none;
+    grid-template-rows: 1fr 1fr 1fr;
+}
+.button1 {
+    grid-row: 1 / 2;
+    grid-column: 4 / 5;
+}
+.button2 {
+    grid-row: 4 / 5;
+    grid-column: 1 / 2;
+}
