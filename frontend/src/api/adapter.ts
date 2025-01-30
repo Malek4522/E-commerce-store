@@ -1,7 +1,7 @@
 import { ApiClient, Product, Order, OrderItem, CustomerInfo } from './types';
 import { CustomApiClient } from './client';
 
-export interface CustomEcomApi {
+export interface CustomApi {
     // Product methods
     getProducts(options?: { 
         page?: number;
@@ -16,7 +16,7 @@ export interface CustomEcomApi {
     getOrder(id: string, email: string): Promise<Order | undefined>;
 }
 
-export function createCustomEcomApi(baseUrl?: string): CustomEcomApi {
+export function createCustomApi(baseUrl?: string): CustomApi {
     const client = new CustomApiClient(baseUrl);
 
     return {

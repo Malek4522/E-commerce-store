@@ -6,17 +6,29 @@ export class CustomApiClient implements ApiClient {
 
     constructor(baseUrl: string = '/api') {
         this.baseUrl = baseUrl;
-        this.token = null;
+        this.token = localStorage.getItem('auth_token');
     }
 
     private async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+        const headers = new Headers({
+            'Content-Type': 'application/json',
+            ...options.headers as Record<string, string>,
+        });
+
+        if (this.token) {
+            headers.set('Authorization', `Bearer ${this.token}`);
+        }
+
         const response = await fetch(`${this.baseUrl}${path}`, {
             ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
+            headers,
         });
+
+        if (response.status === 401) {
+            this.token = null;
+            localStorage.removeItem('auth_token');
+            throw new Error('Unauthorized');
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -27,6 +39,11 @@ export class CustomApiClient implements ApiClient {
 
     setToken(token: string | null) {
         this.token = token;
+        if (token) {
+            localStorage.setItem('auth_token', token);
+        } else {
+            localStorage.removeItem('auth_token');
+        }
     }
 
     // Products

@@ -1,12 +1,12 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { SWRConfig } from 'swr';
-import { CustomEcomApi, createCustomEcomApi } from './adapter';
+import { CustomApi, createCustomApi } from './adapter';
 
-const CustomEcomApiContext = createContext<CustomEcomApi | null>(null);
+const ApiContext = createContext<CustomApi | null>(null);
 
-export function useEcomApi() {
-    const api = useContext(CustomEcomApiContext);
-    if (!api) throw new Error('useEcomApi must be used within CustomEcomApiProvider');
+export function useApi() {
+    const api = useContext(ApiContext);
+    if (!api) throw new Error('useApi must be used within ApiProvider');
     return api;
 }
 
@@ -15,12 +15,12 @@ interface Props {
     baseUrl?: string;
 }
 
-export function CustomEcomApiProvider({ children, baseUrl }: Props) {
-    const api = createCustomEcomApi(baseUrl);
+export function ApiProvider({ children, baseUrl }: Props) {
+    const api = createCustomApi(baseUrl);
 
     return (
         <SWRConfig value={{ provider: () => new Map() }}>
-            <CustomEcomApiContext.Provider value={api}>{children}</CustomEcomApiContext.Provider>
+            <ApiContext.Provider value={api}>{children}</ApiContext.Provider>
         </SWRConfig>
     );
 } 

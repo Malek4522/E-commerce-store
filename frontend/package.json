@@ -23,11 +23,6 @@
     "@remix-run/node": "^2.15.0",
     "@remix-run/react": "^2.15.0",
     "@remix-run/serve": "^2.15.0",
-    "@wix/ecom": "^1.0.846",
-    "@wix/members": "^1.0.129",
-    "@wix/redirects": "^1.0.64",
-    "@wix/sdk": "^1.15.3",
-    "@wix/stores": "^1.0.297",
     "classnames": "^2.5.1",
     "fast-deep-equal": "^3.1.3",
     "isbot": "^5.1.17",
@@ -79,8 +74,6 @@
     "@types/react": "^18.3.13",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
-    "@wixc3/define-remix-app": "^4.6.2",
-    "@wixc3/react-board": "^4.6.2",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.7.0",
@@ -92,11 +85,7 @@
     "sass": "~1.82.0",
     "typescript": "~5.7.2",
     "vite": "^5.4.11",
-    "vite-tsconfig-paths": "^5.1.4",
-    "@codux-boards/react-bootstrap": "1.0.1",
-    "@codux-boards/react-semantic": "1.0.9",
-    "@codux-boards/react-nivo": "1.0.5",
-    "@codux-boards/react-blueprint": "1.0.16"
+    "vite-tsconfig-paths": "^5.1.4"
   },
   "engines": {
     "node": ">=18.0.0"
