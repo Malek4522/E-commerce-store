@@ -12,7 +12,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     try {
         // Track request count to detect infinite loops
         requestCount++;
-        console.log(`Loading product details (request #${requestCount})`);
         
         if (requestCount > 5) {
             throw new Error('Potential infinite loop detected - loader called too many times');
@@ -28,7 +27,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         const url = new URL(request.url);
         url.search = '';
 
-        console.log('Product loaded successfully:', product.name);
         return json({ 
             product,
             canonicalUrl: url.toString()
@@ -74,8 +72,6 @@ export default function ProductDetailsRoute() {
     const data = useLoaderData<typeof loader>();
     const breadcrumbs = useBreadcrumbs();
     const navigation = useNavigation();
-    
-    console.log('Rendering ProductDetails with product:', data?.product?.name);
     
     if (navigation.state === 'loading') {
         return <div>Loading...</div>;

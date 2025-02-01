@@ -12,6 +12,7 @@ import {
     Outlet,
     Scripts,
     ScrollRestoration,
+    LiveReload,
 } from '@remix-run/react';
 import { RouteBreadcrumbs } from '~/src/components/breadcrumbs/use-breadcrumbs';
 import { Footer } from '~/src/components/footer/footer';
@@ -19,6 +20,7 @@ import { Header } from '~/src/components/header/header';
 import { NavigationProgressBar } from '~/src/components/navigation-progress-bar/navigation-progress-bar';
 import { Toaster } from '~/src/components/toaster/toaster';
 import { CartProvider, ApiProvider } from '~/src/api';
+import { AuthProvider } from './api/auth-context';
 
 import styles from './root.module.scss';
 
@@ -43,9 +45,26 @@ export function Layout({ children }: React.PropsWithChildren) {
                 <Links />
             </head>
             <body>
-                {children}
+                <ApiProvider baseUrl="/api">
+                    <CartProvider>
+                        <AuthProvider>
+                            <div>
+                                <div className={styles.root}>
+                                    <Header />
+                                    <main className={styles.main}>
+                                        <Outlet />
+                                    </main>
+                                    <Footer />
+                                </div>
+                                <NavigationProgressBar className={styles.navigationProgressBar} />
+                                <Toaster />
+                            </div>
+                        </AuthProvider>
+                    </CartProvider>
+                </ApiProvider>
                 <ScrollRestoration />
                 <Scripts />
+                <LiveReload />
             </body>
         </html>
     );
@@ -53,21 +72,36 @@ export function Layout({ children }: React.PropsWithChildren) {
 
 export default function App() {
     return (
-        <ApiProvider baseUrl="/api">
-            <CartProvider>
-                <div>
-                    <div className={styles.root}>
-                        <Header />
-                        <main className={styles.main}>
-                            <Outlet />
-                        </main>
-                        <Footer />
-                    </div>
-                    <NavigationProgressBar className={styles.navigationProgressBar} />
-                    <Toaster />
-                </div>
-            </CartProvider>
-        </ApiProvider>
+        <html lang="en">
+            <head>
+                <meta charSet="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <Meta />
+                <Links />
+            </head>
+            <body>
+                <ApiProvider baseUrl="/api">
+                    <CartProvider>
+                        <AuthProvider>
+                            <div>
+                                <div className={styles.root}>
+                                    <Header />
+                                    <main className={styles.main}>
+                                        <Outlet />
+                                    </main>
+                                    <Footer />
+                                </div>
+                                <NavigationProgressBar className={styles.navigationProgressBar} />
+                                <Toaster />
+                            </div>
+                        </AuthProvider>
+                    </CartProvider>
+                </ApiProvider>
+                <ScrollRestoration />
+                <Scripts />
+                <LiveReload />
+            </body>
+        </html>
     );
 }
 

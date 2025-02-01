@@ -1,7 +1,9 @@
 import type { MetaFunction } from '@remix-run/react';
-import { useState, useCallback } from 'react';
-import type { Product, ProductVariant, ProductLink } from '../../types/product';
+import { useState, useCallback, useEffect } from 'react';
+import type { Product, ProductVariant, ProductLink } from '../../api/admin/types';
+import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../api/admin/products';
 import styles from './route.module.scss';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 const IMGBB_API_KEY = "d70392dd5af4640814b4b07ef4761aa0";
 
@@ -167,13 +169,10 @@ function EditProductModal({
     const addColor = () => {
         if (!newColor.trim()) return;
         
-        const colors = Array.from(new Set(editedProduct.variants.map(v => v.color)));
-        const sizes = Array.from(new Set(editedProduct.variants.map(v => v.size)));
-        
-        if (colors.includes(newColor)) return;
+        if (editedProduct.colors.includes(newColor)) return;
 
         const newVariants = [...editedProduct.variants];
-        sizes.forEach(size => {
+        editedProduct.sizes.forEach(size => {
             newVariants.push({ color: newColor, size, quantity: 0 });
         });
 
@@ -188,13 +187,10 @@ function EditProductModal({
     const addSize = () => {
         if (!newSize.trim()) return;
         
-        const colors = Array.from(new Set(editedProduct.variants.map(v => v.color)));
-        const sizes = Array.from(new Set(editedProduct.variants.map(v => v.size)));
-        
-        if (sizes.includes(newSize)) return;
+        if (editedProduct.sizes.includes(newSize)) return;
 
         const newVariants = [...editedProduct.variants];
-        colors.forEach(color => {
+        editedProduct.colors.forEach(color => {
             newVariants.push({ color, size: newSize, quantity: 0 });
         });
 
@@ -293,10 +289,6 @@ function EditProductModal({
         });
     };
 
-    // Get unique colors and sizes
-    const colors = Array.from(new Set(editedProduct.variants.map(v => v.color)));
-    const sizes = Array.from(new Set(editedProduct.variants.map(v => v.size)));
-
     return (
         <div className={styles.modalOverlay} onClick={onClose}>
             <div className={`${styles.modalContent} ${styles.editModal}`} onClick={e => e.stopPropagation()}>
@@ -384,7 +376,7 @@ function EditProductModal({
                             <thead>
                                 <tr>
                                     <th>Color / Size</th>
-                                    {sizes.map(size => (
+                                    {editedProduct.sizes.map(size => (
                                         <th key={size}>
                                             {size}
                                             <button 
@@ -410,7 +402,7 @@ function EditProductModal({
                                 </tr>
                             </thead>
                             <tbody>
-                                {colors.map(color => (
+                                {editedProduct.colors.map(color => (
                                     <tr key={color}>
                                         <th>
                                             <div className={styles.colorCell}>
@@ -428,7 +420,7 @@ function EditProductModal({
                                                 {color}
                                             </div>
                                         </th>
-                                        {sizes.map(size => (
+                                        {editedProduct.sizes.map(size => (
                                             <td key={`${color}-${size}`}>
                                                 <input
                                                     type="number"
@@ -457,7 +449,7 @@ function EditProductModal({
                                             <button type="button" onClick={addColor}>+</button>
                                         </div>
                                     </th>
-                                    {sizes.map(size => (
+                                    {editedProduct.sizes.map(size => (
                                         <td key={size}></td>
                                     ))}
                                     <td></td>
@@ -569,69 +561,18 @@ function EditProductModal({
     );
 }
 
-// Static example data
-const EXAMPLE_PRODUCTS: Product[] = [
-    {
-        _id: '1',
-        name: 'Elegant Summer Dress',
-        description: 'Beautiful summer dress perfect for any occasion',
-        type: 'Robe',
-        price: 5999,
-        variants: [
-            { size: 'S', color: 'Blue', quantity: 5 },
-            { size: 'M', color: 'Blue', quantity: 3 },
-            { size: 'L', color: 'Blue', quantity: 2 },
-            { size: 'M', color: 'Red', quantity: 4 },
-        ],
-        soldPercentage: 45,
-        isNew: true,
-        links: [
-            { url: 'https://www.youtube.com/watch?v=-x2_0zs_Xic', type: 'video' },
-            { url: 'https://www.youtube.com/watch?v=-x2_0zs_Xic', type: 'video' },
-            { url: 'https://i.ibb.co/zTpHTZHp/image.jpg', type: 'image' },
-            { url: 'https://i.ibb.co/zTpHTZHp/image.jpg', type: 'image' },
-            { url: 'https://i.ibb.co/zTpHTZHp/image.jpg', type: 'image' }
-        ],
-        colors: ['Blue', 'Red'],
-        sizes: ['S', 'M', 'L'],
-        createdAt: '2024-01-15T10:00:00Z',
-        updatedAt: '2024-01-15T10:00:00Z'
-    },
-    {
-        _id: '2',
-        name: 'Classic Jumpsuit',
-        description: 'Comfortable and stylish jumpsuit',
-        type: 'Jumpsuit',
-        price: 7999,
-        variants: [
-            { size: 'S', color: 'Black', quantity: 8 },
-            { size: 'M', color: 'Black', quantity: 6 },
-            { size: 'L', color: 'Black', quantity: 4 },
-            { size: 'XL', color: 'Black', quantity: 4 },
-        ],
-        soldPercentage: 30,
-        isNew: false,
-        links: [
-            // H&M summer collection with 500K+ views
-            { url: 'https://www.youtube.com/watch?v=-x2_0zs_Xic', type: 'video' },
-            { url: 'https://i.ibb.co/zTpHTZHp/image.jpg', type: 'image' },
-            { url: 'https://i.ibb.co/zTpHTZHp/image.jpg', type: 'image' }
-        ],
-        colors: ['Black'],
-        sizes: ['S', 'M', 'L'],
-        createdAt: '2024-01-10T15:30:00Z',
-        updatedAt: '2024-01-10T15:30:00Z'
-    }
-];
-
 export default function AdminProducts() {
-    const [products, setProducts] = useState<Product[]>(EXAMPLE_PRODUCTS);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [selectedMedia, setSelectedMedia] = useState<ProductLink | null>(null);
     const [viewingAllMedia, setViewingAllMedia] = useState(false);
     const [currentMediaItems, setCurrentMediaItems] = useState<ProductLink[]>([]);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+    const [showNewProductModal, setShowNewProductModal] = useState(false);
 
+    // Memoize handlers to prevent unnecessary re-renders
     const handleCloseModal = useCallback(() => {
         setSelectedMedia(null);
         setViewingAllMedia(false);
@@ -650,30 +591,54 @@ export default function AdminProducts() {
         setProductToEdit(product);
     }, []);
 
-    const confirmDelete = useCallback(() => {
+    const confirmDelete = useCallback(async () => {
         if (productToDelete) {
-            setProducts(prev => prev.filter(p => p._id !== productToDelete._id));
-            setProductToDelete(null);
+            try {
+                setError(null);
+                await deleteProduct(productToDelete._id);
+                setProducts(prev => prev.filter(p => p._id !== productToDelete._id));
+                setProductToDelete(null);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to delete product');
+            }
         }
     }, [productToDelete]);
 
-    const handleSaveEdit = useCallback((updatedProduct: Product) => {
-        setProducts(prev => prev.map(p => 
-            p._id === updatedProduct._id ? updatedProduct : p
-        ));
-        setProductToEdit(null);
+    const handleSaveEdit = useCallback(async (updatedProduct: Product) => {
+        try {
+            setError(null);
+            const savedProduct = await updateProduct(updatedProduct._id, updatedProduct);
+            setProducts(prev => prev.map(p => 
+                p._id === savedProduct._id ? savedProduct : p
+            ));
+            setProductToEdit(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update product');
+        }
     }, []);
 
-    const formatPrice = (price: number) => {
+    const handleAddNewProduct = useCallback(async (newProduct: Omit<Product, '_id'>) => {
+        try {
+            setError(null);
+            const createdProduct = await createProduct(newProduct);
+            setProducts(prev => [...prev, createdProduct]);
+            setShowNewProductModal(false);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create product');
+        }
+    }, []);
+
+    // Memoize utility functions
+    const formatPrice = useCallback((price: number) => {
         return `${(price / 100).toFixed(2)} DA`;
-    };
+    }, []);
 
-    const getTotalStock = (variants: ProductVariant[]) => {
+    const getTotalStock = useCallback((variants: ProductVariant[]) => {
         return variants.reduce((sum: number, variant: ProductVariant) => sum + variant.quantity, 0);
-    };
+    }, []);
 
-    const renderMediaLinks = (links: ProductLink[]) => {
-        const previewItem = links[0]; // Show only first item in preview
+    const renderMediaLinks = useCallback((links: ProductLink[]) => {
+        const previewItem = links[0];
 
         return (
             <div className={styles.mediaLinks}>
@@ -688,6 +653,7 @@ export default function AdminProducts() {
                                     src={previewItem.url} 
                                     alt="Preview"
                                     className={styles.previewThumbnail}
+                                    loading="lazy" // Add lazy loading
                                 />
                             ) : (
                                 <div className={styles.previewVideo}>
@@ -695,6 +661,7 @@ export default function AdminProducts() {
                                         src={`https://img.youtube.com/vi/${getYouTubeVideoId(previewItem.url)}/default.jpg`}
                                         alt="Video preview"
                                         className={styles.previewThumbnail}
+                                        loading="lazy" // Add lazy loading
                                     />
                                     <span className={styles.miniPlayIcon}>▶</span>
                                 </div>
@@ -705,85 +672,154 @@ export default function AdminProducts() {
                 </button>
             </div>
         );
-    };
+    }, [handleViewAllMedia]);
+
+    // Load products only once on mount
+    useEffect(() => {
+        let mounted = true;
+
+        const loadProducts = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+                const data = await fetchProducts();
+                if (mounted) {
+                    setProducts(data);
+                }
+            } catch (err) {
+                if (mounted) {
+                    setError(err instanceof Error ? err.message : 'Failed to load products');
+                }
+            } finally {
+                if (mounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        loadProducts();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     return (
-        <div className={styles.productsPage}>
-            <header className={styles.header}>
-                <h1>Products Management</h1>
-                <button className={styles.addButton}>Add New Product</button>
-            </header>
-            <div className={styles.content}>
-                <div className={styles.tableWrapper}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>Media</th>
-                                <th>Name</th>
-                                <th>Type</th>
-                                <th>Price</th>
-                                <th>Total Stock</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {products.map((product) => (
-                                <tr key={product._id}>
-                                    <td data-label="Media">{renderMediaLinks(product.links)}</td>
-                                    <td data-label="Name">{product.name}</td>
-                                    <td data-label="Type">{product.type}</td>
-                                    <td data-label="Price">{formatPrice(product.price)}</td>
-                                    <td data-label="Stock">{getTotalStock(product.variants)}</td>
-                                    <td data-label="Status">
-                                        <div className={styles.badges}>
-                                            {product.isNew && (
-                                                <span className={`${styles.badge} ${styles.new}`}>New</span>
-                                            )}
-                                            <span className={`${styles.badge} ${styles.stock}`}>
-                                                {product.soldPercentage}% Sold
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td data-label="Actions">
-                                        <div className={styles.actions}>
-                                            <button 
-                                                className={`${styles.actionButton} ${styles.edit}`}
-                                                onClick={() => handleEdit(product)}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button 
-                                                className={`${styles.actionButton} ${styles.delete}`}
-                                                onClick={() => handleDelete(product)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+        <ProtectedRoute>
+            <div className={styles.productsPage}>
+                <header className={styles.header}>
+                    <h1>Products Management</h1>
+                    <button 
+                        className={styles.addButton}
+                        onClick={() => setShowNewProductModal(true)}
+                    >
+                        Add New Product
+                    </button>
+                </header>
+
+                {error && (
+                    <div className={styles.error}>
+                        {error}
+                    </div>
+                )}
+
+                <div className={styles.content}>
+                    {isLoading ? (
+                        <div className={styles.loading}>Loading products...</div>
+                    ) : (
+                        <div className={styles.tableWrapper}>
+                            <table className={styles.table}>
+                                <thead>
+                                    <tr>
+                                        <th>Media</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Price</th>
+                                        <th>Total Stock</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {products.map((product) => (
+                                        <tr key={product._id}>
+                                            <td data-label="Media">{renderMediaLinks(product.links)}</td>
+                                            <td data-label="Name">{product.name}</td>
+                                            <td data-label="Type">{product.type}</td>
+                                            <td data-label="Price">{formatPrice(product.price)}</td>
+                                            <td data-label="Stock">{getTotalStock(product.variants)}</td>
+                                            <td data-label="Status">
+                                                <div className={styles.badges}>
+                                                    {product.isNew && (
+                                                        <span className={`${styles.badge} ${styles.new}`}>New</span>
+                                                    )}
+                                                    <span className={`${styles.badge} ${styles.stock}`}>
+                                                        {product.soldPercentage}% Sold
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td data-label="Actions">
+                                                <div className={styles.actions}>
+                                                    <button 
+                                                        className={`${styles.actionButton} ${styles.edit}`}
+                                                        onClick={() => handleEdit(product)}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button 
+                                                        className={`${styles.actionButton} ${styles.delete}`}
+                                                        onClick={() => handleDelete(product)}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
+                <MediaPreviewModal 
+                    media={selectedMedia}
+                    onClose={handleCloseModal}
+                    allMedia={viewingAllMedia}
+                    mediaItems={currentMediaItems}
+                />
+                <DeleteConfirmModal
+                    product={productToDelete}
+                    onClose={() => setProductToDelete(null)}
+                    onConfirm={confirmDelete}
+                />
+                <EditProductModal
+                    product={productToEdit}
+                    onClose={() => setProductToEdit(null)}
+                    onSave={handleSaveEdit}
+                />
+                {showNewProductModal && (
+                    <EditProductModal
+                        product={{
+                            _id: '',
+                            name: '',
+                            description: '',
+                            type: 'Jumpsuit',
+                            price: 0,
+                            variants: [],
+                            soldPercentage: 0,
+                            isNew: true,
+                            links: [],
+                            colors: [],
+                            sizes: [],
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        }}
+                        onClose={() => setShowNewProductModal(false)}
+                        onSave={handleAddNewProduct}
+                    />
+                )}
             </div>
-            <MediaPreviewModal 
-                media={selectedMedia}
-                onClose={handleCloseModal}
-                allMedia={viewingAllMedia}
-                mediaItems={currentMediaItems}
-            />
-            <DeleteConfirmModal
-                product={productToDelete}
-                onClose={() => setProductToDelete(null)}
-                onConfirm={confirmDelete}
-            />
-            <EditProductModal
-                product={productToEdit}
-                onClose={() => setProductToEdit(null)}
-                onSave={handleSaveEdit}
-            />
-        </div>
+        </ProtectedRoute>
     );
 }
 
