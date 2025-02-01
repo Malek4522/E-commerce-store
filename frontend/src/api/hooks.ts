@@ -1,40 +1,32 @@
-import useSWR from 'swr';
+import useSWR, { SWRResponse } from 'swr';
 import { useApi } from './context';
 import { useCart } from './cart-context';
-import type { Product } from './types';
+import type { Product, Category, User } from './types';
 
 // Product hooks
 export function useProducts(options?: {
     page?: number;
     limit?: number;
     search?: string;
-}) {
+}): SWRResponse<{ items: Product[]; total: number }> {
     const api = useApi();
-    const { data, error } = useSWR(
-        ['products', options],
-        () => api.getProducts(options || {})
-    );
-
-    return {
-        products: data?.items || [],
-        total: data?.total || 0,
-        isLoading: !error && !data,
-        error,
-    };
+    return useSWR(['products', options], () => api.getProducts(options || {}));
 }
 
-export function useProduct(slug: string) {
+export function useProduct(slug: string): SWRResponse<Product | undefined> {
     const api = useApi();
-    const { data, error } = useSWR(
-        ['product', slug],
-        () => api.getProductBySlug(slug)
-    );
+    return useSWR(['product', slug], () => api.getProductBySlug(slug));
+}
 
-    return {
-        product: data,
-        isLoading: !error && !data,
-        error,
-    };
+// Category hooks
+export function useCategories(): SWRResponse<Category[]> {
+    const api = useApi();
+    return useSWR('categories', () => api.getCategories());
+}
+
+export function useCategory(slug: string): SWRResponse<Category | null> {
+    const api = useApi();
+    return useSWR(['category', slug], () => api.getCategoryBySlug(slug));
 }
 
 // Cart hooks
@@ -61,6 +53,29 @@ export function useCartOperations() {
         addToCart,
         updateCartItem,
         removeFromCart,
+    };
+}
+
+// User hooks
+export function useUserInfo() {
+    const api = useApi();
+    const { data: user } = useSWR('currentUser', () => api.getCurrentUser());
+    
+    return {
+        user,
+        isLoggedIn: !!user,
+    };
+}
+
+export function useAuth() {
+    const api = useApi();
+    
+    return {
+        login: api.login,
+        logout: api.logout,
+        register: api.register,
+        forgotPassword: api.forgotPassword,
+        resetPassword: api.resetPassword,
     };
 }
 

@@ -1,45 +1,43 @@
 import classNames from 'classnames';
-
 import styles from './color-select.module.scss';
 
 export interface ColorSelectOption {
-    id: string;
-    color: string;
-    crossedOut?: boolean;
+    value: string;
+    label: string;
+    disabled?: boolean;
 }
 
 export interface ColorSelectProps {
     options: ColorSelectOption[];
-    selectedId: string;
-    onChange: (id: string) => void;
+    value: string;
+    onChange: (value: string) => void;
     hasError?: boolean;
     className?: string;
 }
 
-export const ColorSelect = ({
+export function ColorSelect({
     options,
-    selectedId,
+    value,
     onChange,
     hasError,
-    className,
-}: ColorSelectProps) => {
+    className
+}: ColorSelectProps) {
     return (
-        <div className={classNames(styles.root, { [styles.hasError]: hasError }, className)}>
+        <div className={classNames(styles.root, className, { [styles.error]: hasError })}>
             {options.map((option) => (
                 <button
-                    key={option.id}
+                    key={option.value}
+                    type="button"
                     className={classNames(styles.option, {
-                        [styles.selected]: selectedId === option.id,
-                        [styles.crossedOut]: option.crossedOut,
+                        [styles.selected]: option.value === value,
+                        [styles.disabled]: option.disabled
                     })}
-                    onClick={() => onChange(option.id)}
-                >
-                    <div
-                        className={styles.colorBox}
-                        style={{ backgroundColor: option.color }}
-                    ></div>
-                </button>
+                    onClick={() => !option.disabled && onChange(option.value)}
+                    disabled={option.disabled}
+                    title={option.label}
+                    style={{ backgroundColor: option.value }}
+                />
             ))}
         </div>
     );
-};
+}

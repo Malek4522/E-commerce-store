@@ -1,8 +1,7 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
+import { json, type LoaderFunctionArgs } from '@remix-run/node';
 import { type MetaFunction, useLoaderData } from '@remix-run/react';
-import type { GetStaticRoutes } from '@wixc3/define-remix-app';
 import classNames from 'classnames';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AppliedProductFilters } from '~/src/components/applied-product-filters/applied-product-filters';
 import { Breadcrumbs } from '~/src/components/breadcrumbs/breadcrumbs';
 import { RouteBreadcrumbs, useBreadcrumbs } from '~/src/components/breadcrumbs/use-breadcrumbs';
@@ -10,20 +9,26 @@ import { CategoryLink } from '~/src/components/category-link/category-link';
 import { ProductGrid } from '~/src/components/product-grid/product-grid';
 import { ProductSortingSelect } from '~/src/components/product-sorting-select/product-sorting-select';
 import { toast } from '~/src/components/toast/toast';
-import { initializeEcomApiAnonymous } from '~/src/wix/ecom';
-import { initializeEcomApiForRequest } from '~/src/wix/ecom/session';
-import {
-    productFiltersFromSearchParams,
-    productSortByFromSearchParams,
-    useAppliedProductFilters,
-    useProductSorting,
-    useProductsPageResults,
-} from '~/src/wix/products';
-import { getErrorMessage } from '~/src/wix/utils';
+import { initializeApiForRequest } from '~/src/api/session';
+import { Category, Product, ProductFilters, ProductSortBy } from '~/src/api/types';
+import { getErrorMessage } from '~/src/utils';
+import { useFilters } from '~/src/hooks/use-filters';
+import { useSorting } from '~/src/hooks/use-sorting';
 
 import styles from './route.module.scss';
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+interface LoaderData {
+    category: Category;
+    products: Product[];
+    totalProducts: number;
+    categories: Category[];
+    priceRange: {
+        min: number;
+        max: number;
+    };
+}
+
+export async function loader({ params, request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
     const { categorySlug } = params;
 
@@ -31,69 +36,96 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         throw new Response('Bad Request', { status: 400 });
     }
 
-    const api = await initializeEcomApiForRequest(request);
-    const filters = productFiltersFromSearchParams(url.searchParams);
-    const sortBy = productSortByFromSearchParams(url.searchParams);
+    const { api } = await initializeApiForRequest(request);
     const category = await api.getCategoryBySlug(categorySlug);
 
     if (!category) {
         throw new Response('Category Not Found', { status: 404 });
     }
 
-    const [categoryProducts, allCategories, productPriceBounds] = await Promise.all([
-        api.getProducts({ categoryId: category._id!, filters, sortBy }),
-        api.getAllCategories(),
-        api.getProductPriceBoundsInCategory(category._id!),
+    const searchParams = new URLSearchParams(url.search);
+    const filters: ProductFilters = {
+        categories: [category.id],
+        search: searchParams.get('search') || undefined,
+        price: {
+            min: Number(searchParams.get('minPrice')) || 0,
+            max: Number(searchParams.get('maxPrice')) || Infinity
+        }
+    };
+
+    const sortBy = (searchParams.get('sortBy') as ProductSortBy) || ProductSortBy.NAME_ASC;
+    const page = Number(searchParams.get('page')) || 1;
+    const limit = 12;
+
+    const [productsResponse, categories] = await Promise.all([
+        api.getProducts({ page, limit, ...filters }),
+        api.getCategories()
     ]);
 
-    return { category, categoryProducts, allCategories, productPriceBounds };
-};
+    // Calculate price range from available products
+    const prices = productsResponse.items.map(product => product.price.amount);
+    const priceRange = {
+        min: Math.min(...prices),
+        max: Math.max(...prices)
+    };
+
+    return json<LoaderData>({
+        category,
+        products: productsResponse.items,
+        totalProducts: productsResponse.total,
+        categories,
+        priceRange
+    });
+}
 
 const breadcrumbs: RouteBreadcrumbs<typeof loader> = (match) => [
     {
-        title: match.data.category.name!,
+        title: match.data.category.name,
         to: `/products/${match.data.category.slug}`,
     },
 ];
-
-export const getStaticRoutes: GetStaticRoutes = async () => {
-    const api = initializeEcomApiAnonymous();
-    const categories = await api.getAllCategories();
-    return categories.map((category) => `/products/${category.slug}`);
-};
 
 export const handle = {
     breadcrumbs,
 };
 
-export default function ProductsPage() {
+export default function ProductsRoute() {
     const {
         category,
-        categoryProducts: resultsFromLoader,
-        allCategories,
-        productPriceBounds,
+        products: initialProducts,
+        totalProducts,
+        categories,
+        priceRange
     } = useLoaderData<typeof loader>();
 
-    const { appliedFilters, someFiltersApplied, clearFilters, clearAllFilters } =
-        useAppliedProductFilters();
+    const [products, setProducts] = useState<Product[]>(initialProducts);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const { sorting } = useProductSorting();
-
-    const { products, totalProducts, loadMoreProducts, isLoadingMoreProducts, error } =
-        useProductsPageResults({
-            categoryId: category._id!,
-            filters: appliedFilters,
-            sorting,
-            resultsFromLoader,
-        });
-
-    const currency = products[0]?.priceData?.currency ?? 'USD';
+    const { filters, someFiltersApplied, clearFilter, clearAllFilters } = useFilters();
+    const { sorting } = useSorting();
 
     const breadcrumbs = useBreadcrumbs();
 
-    useEffect(() => {
-        if (error) toast.error(getErrorMessage(error));
-    }, [error]);
+    const loadMoreProducts = async () => {
+        try {
+            setIsLoadingMore(true);
+            const nextPage = currentPage + 1;
+            const { api } = await initializeApiForRequest(new Request(window.location.href));
+            const response = await api.getProducts({
+                page: nextPage,
+                limit: 12,
+                categories: [category.id],
+                ...filters
+            });
+            setProducts([...products, ...response.items]);
+            setCurrentPage(nextPage);
+        } catch (error) {
+            toast.error(getErrorMessage(error));
+        } finally {
+            setIsLoadingMore(false);
+        }
+    };
 
     return (
         <div className={styles.page}>
@@ -104,17 +136,17 @@ export default function ProductsPage() {
                     <nav className={styles.nav1}>
                         <h2 className={styles.sidebarTitle}>Browse by</h2>
                         <ul className={styles.categoryList}>
-                            {allCategories.map((category) => (
-                                <li key={category._id} className={styles.categoryListItem}>
+                            {categories.map((cat) => (
+                                <li key={cat.id} className={styles.categoryListItem}>
                                     <CategoryLink
-                                        categorySlug={category.slug!}
+                                        categorySlug={cat.slug}
                                         className={({ isActive }) =>
                                             classNames(styles.categoryLink, {
                                                 [styles.categoryLinkActive]: isActive,
                                             })
                                         }
                                     >
-                                        {category.name}
+                                        {cat.name}
                                     </CategoryLink>
                                 </li>
                             ))}
@@ -125,9 +157,9 @@ export default function ProductsPage() {
                 <div className={styles.main}>
                     <div className={styles.categoryHeader}>
                         <h1 className={styles.categoryName}>
-                            {appliedFilters.search ? `"${appliedFilters.search}"` : category.name}
+                            {filters.search ? `"${filters.search}"` : category.name}
                         </h1>
-                        {category.description && !appliedFilters.search && (
+                        {category.description && !filters.search && (
                             <p className={styles.categoryDescription}>{category.description}</p>
                         )}
                     </div>
@@ -135,12 +167,10 @@ export default function ProductsPage() {
                     {someFiltersApplied && (
                         <AppliedProductFilters
                             className={styles.appliedFilters}
-                            appliedFilters={appliedFilters}
-                            onClearFilters={clearFilters}
+                            filters={filters}
+                            onClearFilter={clearFilter}
                             onClearAllFilters={clearAllFilters}
-                            currency={currency}
-                            minPriceInCategory={productPriceBounds.lowest}
-                            maxPriceInCategory={productPriceBounds.highest}
+                            priceRange={priceRange}
                         />
                     )}
 
@@ -164,9 +194,9 @@ export default function ProductsPage() {
                             <button
                                 className="button secondaryButton"
                                 onClick={loadMoreProducts}
-                                disabled={isLoadingMoreProducts}
+                                disabled={isLoadingMore}
                             >
-                                {isLoadingMoreProducts ? 'Loading...' : 'Load More'}
+                                {isLoadingMore ? 'Loading...' : 'Load More'}
                             </button>
                         </div>
                     )}
@@ -178,10 +208,10 @@ export default function ProductsPage() {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [
-        { title: `${data?.category.name ?? 'ReClaim: Products'} | ReClaim` },
+        { title: `${data?.category.name ?? 'Products'} | ReClaim` },
         {
             name: 'description',
-            content: data?.category.description,
+            content: data?.category.description ?? 'Browse our products',
         },
         {
             property: 'robots',

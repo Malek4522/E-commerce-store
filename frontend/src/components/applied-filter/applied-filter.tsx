@@ -1,18 +1,24 @@
-import { getClickableElementAttributes } from '~/src/wix/utils';
-import { CrossIcon } from '../icons';
-
+import classNames from 'classnames';
 import styles from './applied-filter.module.scss';
 
-interface AppliedFilterProps {
-    children: React.ReactNode;
+export interface AppliedFilterProps {
     onClick: () => void;
+    children: React.ReactNode;
+    className?: string;
 }
 
-export const AppliedFilter = ({ children, onClick }: AppliedFilterProps) => {
+export function AppliedFilter({ onClick, children, className }: AppliedFilterProps) {
     return (
-        <div className={styles.root} {...getClickableElementAttributes(onClick)}>
-            {children}
-            <CrossIcon width={12} height={12} />
-        </div>
+        <button
+            type="button"
+            className={classNames(styles.root, className)}
+            onClick={onClick}
+            aria-label="Remove filter"
+        >
+            <span className={styles.content}>{children}</span>
+            <span className={styles.removeIcon} aria-hidden="true">
+                ×
+            </span>
+        </button>
     );
-};
+}

@@ -1,73 +1,56 @@
-import { useState } from 'react';
 import classNames from 'classnames';
-import { getClickableElementAttributes } from '~/src/wix/utils';
-import { DropdownIcon } from '../icons';
-
+import { useState } from 'react';
 import styles from './accordion.module.scss';
 
-interface AccordionItem {
+export interface AccordionItem {
     header: React.ReactNode;
     content: React.ReactNode;
 }
 
-interface AccordionProps {
+export interface AccordionProps {
     items: AccordionItem[];
     initialOpenItemIndex?: number;
-    className?: string;
-    small?: boolean;
     expandIcon?: React.ReactNode;
     collapseIcon?: React.ReactNode;
+    className?: string;
 }
 
-export const Accordion = ({
+export function Accordion({
     items,
     initialOpenItemIndex,
-    className,
-    small = false,
     expandIcon,
     collapseIcon,
-}: AccordionProps) => {
-    const [openItemIndex, setOpenItemIndex] = useState<number | null>(initialOpenItemIndex ?? null);
+    className,
+}: AccordionProps) {
+    const [openItemIndex, setOpenItemIndex] = useState(initialOpenItemIndex);
 
     return (
-        <div className={classNames({ [styles.small]: small }, className)}>
+        <div className={classNames(styles.root, className)}>
             {items.map((item, index) => {
                 const isOpen = openItemIndex === index;
 
                 return (
-                    <div key={index} className={styles.item}>
-                        <div
+                    <div
+                        key={index}
+                        className={classNames(styles.item, {
+                            [styles.open]: isOpen,
+                        })}
+                    >
+                        <button
+                            type="button"
                             className={styles.header}
-                            {...getClickableElementAttributes(() =>
-                                setOpenItemIndex(isOpen ? null : index),
-                            )}
+                            onClick={() => setOpenItemIndex(isOpen ? undefined : index)}
+                            aria-expanded={isOpen}
                         >
-                            <div className={styles.headerContent}>{item.header}</div>
-
-                            <div className={styles.toggleIconContainer}>
-                                {isOpen
-                                    ? collapseIcon || (
-                                          <DropdownIcon
-                                              width={12}
-                                              className={styles.collapseIcon}
-                                          />
-                                      )
-                                    : expandIcon || <DropdownIcon width={12} />}
-                            </div>
-                        </div>
-
-                        <div
-                            className={classNames(styles.content, {
-                                [styles.expanded]: isOpen,
-                            })}
-                        >
-                            <div className={styles.contentExpander}>
-                                <div className={styles.contentInner}>{item.content}</div>
-                            </div>
-                        </div>
+                            {item.header}
+                            <span className={styles.icon}>
+                                {isOpen ? collapseIcon : expandIcon}
+                            </span>
+                        </button>
+                        {isOpen && <div className={styles.content}>{item.content}</div>}
                     </div>
                 );
             })}
         </div>
     );
-};
+}

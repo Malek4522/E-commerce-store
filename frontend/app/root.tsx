@@ -12,34 +12,19 @@ import {
     Outlet,
     Scripts,
     ScrollRestoration,
-    useLoaderData,
 } from '@remix-run/react';
 import { RouteBreadcrumbs } from '~/src/components/breadcrumbs/use-breadcrumbs';
 import { Footer } from '~/src/components/footer/footer';
 import { Header } from '~/src/components/header/header';
 import { NavigationProgressBar } from '~/src/components/navigation-progress-bar/navigation-progress-bar';
 import { Toaster } from '~/src/components/toaster/toaster';
-import { CartOpenContextProvider } from '~/src/wix/cart';
-import { EcomApiContextProvider, getWixClientId, setWixClientId } from '~/src/wix/ecom';
-import { commitSession, initializeEcomSession } from '~/src/wix/ecom/session';
 import { CartProvider, ApiProvider } from '~/src/api';
 
 import styles from './root.module.scss';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-    const { wixSessionTokens, session, shouldUpdateSessionCookie } =
-        await initializeEcomSession(request);
-
-    const data = {
-        wixClientId: getWixClientId(),
-        wixSessionTokens,
-    };
-
-    const headers: HeadersInit = shouldUpdateSessionCookie
-        ? { 'Set-Cookie': await commitSession(session) }
-        : {};
-
-    return json(data, { headers });
+    // You might want to add your own session handling here
+    return json({});
 }
 
 const breadcrumbs: RouteBreadcrumbs = () => [{ title: 'Home', to: '/' }];
@@ -67,30 +52,22 @@ export function Layout({ children }: React.PropsWithChildren) {
 }
 
 export default function App() {
-    const { wixClientId, wixSessionTokens } = useLoaderData<typeof loader>();
-
-    setWixClientId(wixClientId);
-
     return (
-        <EcomApiContextProvider tokens={wixSessionTokens}>
-            <CartOpenContextProvider>
-                <ApiProvider>
-                    <CartProvider>
-                        <div>
-                            <div className={styles.root}>
-                                <Header />
-                                <main className={styles.main}>
-                                    <Outlet />
-                                </main>
-                                <Footer />
-                            </div>
-                            <NavigationProgressBar className={styles.navigationProgressBar} />
-                            <Toaster />
-                        </div>
-                    </CartProvider>
-                </ApiProvider>
-            </CartOpenContextProvider>
-        </EcomApiContextProvider>
+        <ApiProvider baseUrl="/api">
+            <CartProvider>
+                <div>
+                    <div className={styles.root}>
+                        <Header />
+                        <main className={styles.main}>
+                            <Outlet />
+                        </main>
+                        <Footer />
+                    </div>
+                    <NavigationProgressBar className={styles.navigationProgressBar} />
+                    <Toaster />
+                </div>
+            </CartProvider>
+        </ApiProvider>
     );
 }
 

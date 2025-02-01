@@ -1,58 +1,57 @@
-import { products } from '@wix/stores';
 import { useEffect, useState } from 'react';
 import classNames from 'classnames';
-import { getClickableElementAttributes } from '~/src/wix/utils';
 import { ImagePlaceholderIcon } from '../icons';
-
 import styles from './product-images.module.scss';
 
-interface ProductImagesProps {
-    media?: products.Media;
+interface ProductImage {
+    id: string;
+    url: string;
+    altText?: string;
 }
 
-export const ProductImages = ({ media }: ProductImagesProps) => {
-    const [selectedImage, setSelectedImage] = useState<products.MediaItem | undefined>(
-        media?.mainMedia,
-    );
+interface ProductImagesProps {
+    images?: ProductImage[];
+    mainImage?: ProductImage;
+}
 
-    // The media can change when another product variant was selected and it has
-    // a different set of media items. In this case make sure the selected image is refreshed.
+export const ProductImages = ({ images = [], mainImage }: ProductImagesProps) => {
+    const [selectedImage, setSelectedImage] = useState<ProductImage | undefined>(mainImage);
+
     useEffect(() => {
-        setSelectedImage(media?.mainMedia);
-    }, [media]);
-
-    const imageItems = media?.items?.filter((item) => item.image !== undefined);
+        setSelectedImage(mainImage);
+    }, [mainImage]);
 
     return (
         <div>
             <div className={styles.mainImageWrapper}>
-                {selectedImage && selectedImage.image ? (
+                {selectedImage ? (
                     <img
                         className={styles.mainImage}
-                        src={selectedImage.image.url}
-                        alt={selectedImage.image.altText ?? ''}
+                        src={selectedImage.url}
+                        alt={selectedImage.altText ?? ''}
                     />
                 ) : (
                     <ImagePlaceholderIcon className={styles.imagePlaceholderIcon} />
                 )}
             </div>
 
-            {imageItems && imageItems.length > 0 && (
+            {images.length > 0 && (
                 <div className={styles.thumbnails}>
-                    {imageItems.map((item) => (
-                        <div
-                            key={item._id}
+                    {images.map((image) => (
+                        <button
+                            key={image.id}
                             className={classNames(styles.thumbnail, {
-                                [styles.selected]: selectedImage && selectedImage._id === item._id,
+                                [styles.selected]: selectedImage && selectedImage.id === image.id,
                             })}
-                            {...getClickableElementAttributes(() => setSelectedImage(item))}
+                            onClick={() => setSelectedImage(image)}
+                            type="button"
                         >
                             <img
                                 className={styles.thumbnailImage}
-                                src={item.image!.url}
-                                alt={item.image!.altText ?? ''}
+                                src={image.url}
+                                alt={image.altText ?? ''}
                             />
-                        </div>
+                        </button>
                     ))}
                 </div>
             )}

@@ -1,56 +1,117 @@
-import type { LoaderFunctionArgs } from '@remix-run/node';
-import { type MetaFunction, useLoaderData } from '@remix-run/react';
-import { initializeEcomApiForRequest } from '~/src/wix/ecom/session';
-import { CategoryLink } from '~/src/components/category-link/category-link';
-import { OrderSummary } from '~/src/components/order-summary/order-summary';
-
+import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
+import { Order } from '~/src/api/types';
+import { initializeApiForRequest } from '~/src/api/session';
+import { OrderCard } from '~/src/components/order-card/order-card';
 import styles from './route.module.scss';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+interface LoaderData {
+    order: Order;
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+    const { isAuthenticated } = await initializeApiForRequest(request);
+    if (!isAuthenticated) {
+        return redirect('/login');
+    }
+
     const url = new URL(request.url);
     const orderId = url.searchParams.get('orderId');
-    const api = await initializeEcomApiForRequest(request);
-    // Allow a missing `orderId` to support viewing this page in Codux.
-    const order = orderId ? await api.getOrder(orderId) : undefined;
-    return { order };
-};
 
-export default function ThankYouPage() {
+    if (!orderId) {
+        return redirect('/');
+    }
+
+    // TODO: Replace with actual API call
+    const mockOrder: Order = {
+        id: orderId,
+        items: [
+            {
+                id: '1',
+                productId: '1',
+                productName: 'Sample Product',
+                quantity: 1,
+                price: {
+                    amount: 99.99,
+                    formattedAmount: '$99.99'
+                }
+            }
+        ],
+        priceSummary: {
+            subtotal: {
+                amount: 99.99,
+                formattedAmount: '$99.99'
+            },
+            shipping: {
+                amount: 10,
+                formattedAmount: '$10.00'
+            },
+            tax: {
+                amount: 5,
+                formattedAmount: '$5.00'
+            },
+            total: {
+                amount: 114.99,
+                formattedAmount: '$114.99'
+            }
+        },
+        shippingInfo: {
+            address: {
+                addressLine1: '123 Main St',
+                city: 'New York',
+                state: 'NY',
+                postalCode: '10001',
+                country: 'USA'
+            },
+            contact: {
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john@example.com'
+            }
+        },
+        billingInfo: {
+            address: {
+                addressLine1: '123 Main St',
+                city: 'New York',
+                state: 'NY',
+                postalCode: '10001',
+                country: 'USA'
+            },
+            contact: {
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john@example.com'
+            }
+        },
+        status: 'processing',
+        createdAt: new Date().toISOString()
+    };
+
+    return json<LoaderData>({ order: mockOrder });
+}
+
+export default function ThankYouRoute() {
     const { order } = useLoaderData<typeof loader>();
 
     return (
         <div className={styles.root}>
-            <h1 className="heading4">Merci</h1>
-            <div className={styles.subtitle}>
-                On vous appellera bientôt pour confirmer votre commande.
+            <h1 className={styles.title}>Thank You for Your Order!</h1>
+            <p className={styles.message}>
+                Your order has been received and is being processed. You will receive an email
+                confirmation shortly.
+            </p>
+            <div className={styles.orderDetails}>
+                <h2 className={styles.subtitle}>Order Details</h2>
+                <OrderCard order={order} />
             </div>
-
-            {order && (
-                <>
-                    <div className={styles.orderNumber}>Order number: {order.number}</div>
-                    <OrderSummary order={order} className={styles.orderSummary} />
-                </>
-            )}
-
-            <CategoryLink categorySlug="all-products" className={styles.link}>
-                Continuer La Navigation
-            </CategoryLink>
+            <div className={styles.actions}>
+                <Link to="/members-area/my-orders" className={styles.link}>
+                    View All Orders
+                </Link>
+                <Link to="/" className={styles.link}>
+                    Continue Shopping
+                </Link>
+            </div>
         </div>
     );
 }
-
-export const meta: MetaFunction = () => {
-    return [
-        { title: 'Thank You | ReClaim' },
-        {
-            name: 'description',
-            content: 'Thank You for your order',
-        },
-        {
-            property: 'robots',
-            content: 'noindex, nofollow',
-        },
-    ];
-};
-
-export { ErrorBoundary } from '~/src/components/error-page/error-page';

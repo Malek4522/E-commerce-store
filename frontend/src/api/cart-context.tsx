@@ -1,43 +1,35 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { Cart } from './types';
+import { createContext, useContext, ReactNode } from 'react';
+import useSWR, { mutate } from 'swr';
 import { useApi } from './context';
+import type { Cart } from './types';
 
-interface CartContextType {
-    cart: Cart | null;
-    isOpen: boolean;
-    setIsOpen: (open: boolean) => void;
+interface CartContextValue {
+    cart: Cart | undefined;
+    isLoading: boolean;
     refreshCart: () => Promise<void>;
 }
 
-const CartContext = createContext<CartContextType | null>(null);
+const CartContext = createContext<CartContextValue>({
+    cart: undefined,
+    isLoading: false,
+    refreshCart: async () => {},
+});
 
-export function useCart() {
-    const context = useContext(CartContext);
-    if (!context) throw new Error('useCart must be used within CartProvider');
-    return context;
-}
-
-interface Props {
-    children: ReactNode;
-}
-
-export function CartProvider({ children }: Props) {
-    const [cart, setCart] = useState<Cart | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
+export function CartProvider({ children }: { children: ReactNode }) {
     const api = useApi();
+    const { data: cart, isLoading } = useSWR('cart', () => api.getCart());
 
     const refreshCart = async () => {
-        try {
-            const updatedCart = await api.getCart();
-            setCart(updatedCart || null);
-        } catch (error) {
-            console.error('Failed to fetch cart:', error);
-        }
+        await mutate('cart');
     };
 
     return (
-        <CartContext.Provider value={{ cart, isOpen, setIsOpen, refreshCart }}>
+        <CartContext.Provider value={{ cart, isLoading, refreshCart }}>
             {children}
         </CartContext.Provider>
     );
+}
+
+export function useCart() {
+    return useContext(CartContext);
 } 

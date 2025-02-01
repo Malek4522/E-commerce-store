@@ -1,9 +1,37 @@
+.root {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.label {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
 .select {
-    width: 240px;
-    justify-content: end;
-    background: none;
-    border: none;
-    font: var(--paragraph3);
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #111827;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+
+    &:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 2px #93c5fd;
+    }
+
+    &:hover {
+        border-color: #d1d5db;
+    }
 }
 
 .selectDropdown {

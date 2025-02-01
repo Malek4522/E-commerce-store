@@ -1,54 +1,53 @@
-import { useMemo } from 'react';
-import { Accordion } from '~/src/components/accordion/accordion';
-import { MinusIcon, PlusIcon } from '~/src/components/icons';
-import { IProductFilters } from '~/src/wix/ecom';
-import { productFiltersFromSearchParams, searchParamsFromProductFilters } from '~/src/wix/products';
-import { mergeUrlSearchParams, useSearchParamsOptimistic } from '~/src/wix/utils';
+import { useCallback } from 'react';
+import { useLocation } from '@remix-run/react';
+import { ProductFilters } from '~/src/api/types';
+import { productFiltersFromSearchParams, searchParamsFromProductFilters } from '~/src/api/product-utils';
+import { mergeUrlSearchParams, useSearchParamsOptimistic } from '~/src/api/utils';
 import { PriceFilter } from './price-filter';
+import { CategoryFilter } from './category-filter';
+import { SearchFilter } from './search-filter';
+import { AppliedProductFilters } from '../applied-product-filters/applied-product-filters';
+
+import styles from './product-filters.module.scss';
 
 interface ProductFiltersProps {
-    minAvailablePrice: number;
-    maxAvailablePrice: number;
-    currency: string;
+    className?: string;
 }
 
-export const ProductFilters = ({
-    minAvailablePrice,
-    maxAvailablePrice,
-    currency,
-}: ProductFiltersProps) => {
+export const ProductFilters = ({ className }: ProductFiltersProps) => {
+    const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParamsOptimistic();
+    const filters = productFiltersFromSearchParams(searchParams);
 
-    const filters = useMemo(() => productFiltersFromSearchParams(searchParams), [searchParams]);
-
-    const handleFiltersChange = (changed: Partial<IProductFilters>) => {
-        const newParams = searchParamsFromProductFilters({ ...filters, ...changed });
-        setSearchParams((params) => mergeUrlSearchParams(params, newParams), {
-            preventScrollReset: true,
-        });
-    };
+    const handleFiltersChange = useCallback(
+        (nextFilters: ProductFilters) => {
+            const nextSearchParams = searchParamsFromProductFilters(nextFilters);
+            setSearchParams((prev) => mergeUrlSearchParams(prev, nextSearchParams));
+        },
+        [setSearchParams],
+    );
 
     return (
-        <Accordion
-            small
-            expandIcon={<PlusIcon width={20} />}
-            collapseIcon={<MinusIcon width={20} />}
-            items={[
-                {
-                    header: 'Price',
-                    content: (
-                        <PriceFilter
-                            minAvailablePrice={minAvailablePrice}
-                            maxAvailablePrice={maxAvailablePrice}
-                            minSelectedPrice={filters.minPrice}
-                            maxSelectedPrice={filters.maxPrice}
-                            currency={currency}
-                            onChange={handleFiltersChange}
-                        />
-                    ),
-                },
-            ]}
-            initialOpenItemIndex={0}
-        />
+        <div className={className}>
+            <div className={styles.filters}>
+                <SearchFilter
+                    value={filters.search}
+                    onChange={(search) => handleFiltersChange({ ...filters, search })}
+                />
+                <PriceFilter
+                    value={filters.price}
+                    onChange={(price) => handleFiltersChange({ ...filters, price })}
+                />
+                <CategoryFilter
+                    value={filters.categories}
+                    onChange={(categories) => handleFiltersChange({ ...filters, categories })}
+                />
+            </div>
+            <AppliedProductFilters
+                className={styles.appliedFilters}
+                filters={filters}
+                onChange={handleFiltersChange}
+            />
+        </div>
     );
 };

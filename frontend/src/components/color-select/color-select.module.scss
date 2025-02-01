@@ -10,30 +10,38 @@
 .root {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 0.5rem;
+
+    &.error .option {
+        border-color: #ef4444;
+    }
 }
 
 .option {
-    height: var(--option-size);
-    width: var(--option-size);
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
-    transition: padding 100ms;
-    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 9999px;
     cursor: pointer;
-}
+    transition: all 0.15s ease-in-out;
 
-.option:hover,
-.option.selected {
-    padding: 2px;
-}
+    &:hover:not(.disabled) {
+        transform: scale(1.1);
+    }
 
-.option:hover {
-    border-color: var(--border-color-hover);
-}
+    &:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #93c5fd;
+    }
 
-.option.selected {
-    border-color: var(--border-color-selected);
+    &.selected {
+        border-color: #2563eb;
+    }
+
+    &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 }
 
 .colorBox {

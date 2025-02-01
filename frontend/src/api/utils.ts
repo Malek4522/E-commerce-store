@@ -1,4 +1,5 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
+import { useSearchParams } from '@remix-run/react';
 
 // Error handling
 export function getErrorMessage(error: unknown): string {
@@ -13,33 +14,55 @@ export function getCartItemCount(cart: { items: Array<{ quantity: number }> } | 
 }
 
 // Price formatting
-export function formatPrice(price: number, currency: string = 'USD'): string {
+export function formatPrice(price: number): string {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency,
+        currency: 'USD',
     }).format(price);
 }
 
 // URL and search params utilities
-export function mergeUrlSearchParams(...searchParams: URLSearchParams[]): URLSearchParams {
-    const merged = new URLSearchParams();
-    for (const params of searchParams) {
-        for (const [key, value] of params.entries()) {
-            merged.append(key, value);
-        }
+export function removeQueryStringFromUrl(url: string): string {
+    return url.split('?')[0];
+}
+
+export function mergeUrlSearchParams(
+    target: URLSearchParams,
+    source: URLSearchParams,
+): URLSearchParams {
+    const merged = new URLSearchParams(target);
+    for (const [key, value] of source.entries()) {
+        merged.set(key, value);
     }
     return merged;
 }
 
+export function useSearchParamsOptimistic() {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const setSearchParamsOptimistic = useCallback(
+        (nextInit: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams)) => {
+            const nextSearchParams =
+                typeof nextInit === 'function' ? nextInit(searchParams) : nextInit;
+            setSearchParams(nextSearchParams, { preventScrollReset: true });
+        },
+        [searchParams, setSearchParams],
+    );
+
+    return [searchParams, setSearchParamsOptimistic] as const;
+}
+
 // Accessibility utilities
-export function getClickableElementAttributes(onClick: () => void) {
+export function getClickableElementAttributes(onClick?: () => void) {
+    if (!onClick) return {};
+
     return {
         role: 'button',
         tabIndex: 0,
         onClick,
-        onKeyDown: (e: React.KeyboardEvent) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+        onKeyDown: (event: React.KeyboardEvent) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
                 onClick();
             }
         },
@@ -49,22 +72,24 @@ export function getClickableElementAttributes(onClick: () => void) {
 // Debounce utility
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
     callback: T,
-    wait: number
+    wait: number,
 ): T {
-    const timeout = useRef<NodeJS.Timeout>();
-    
     return useCallback(
-        (...args: Parameters<T>) => {
-            if (timeout.current) {
-                clearTimeout(timeout.current);
-            }
-            
-            timeout.current = setTimeout(() => {
-                callback(...args);
-            }, wait);
-        },
-        [callback, wait]
+        debounce(callback, wait),
+        [callback, wait],
     ) as T;
+}
+
+function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number,
+): (...args: Parameters<T>) => void {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    return function debounced(this: any, ...args: Parameters<T>) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), wait);
+    };
 }
 
 // Product image URL utility
@@ -82,7 +107,7 @@ export function getProductImageUrl(product: { images: string[] }, options: { siz
 }
 
 // Range alignment utility
-export function alignRangeToNiceStep(min: number, max: number, step: number): { min: number; max: number } {
+export function alignRangeToNiceStep(min: number, max: number, step: number) {
     return {
         min: Math.floor(min / step) * step,
         max: Math.ceil(max / step) * step,

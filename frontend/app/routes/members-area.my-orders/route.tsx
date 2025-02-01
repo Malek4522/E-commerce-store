@@ -1,121 +1,110 @@
-import {
-    redirect,
-    type TypedResponse,
-    type LoaderFunctionArgs,
-    type MetaFunction,
-} from '@remix-run/node';
+import { json, type LoaderFunctionArgs } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { type OrderDetails } from '~/src/wix/ecom';
-import { initializeEcomApiForRequest } from '~/src/wix/ecom/session';
-import { OrderSummary } from '~/src/components/order-summary/order-summary';
-import { Accordion } from '~/src/components/accordion/accordion';
-import { CategoryLink } from '~/src/components/category-link/category-link';
-import { loaderMockData } from './loader-mock-data';
-
+import { Order } from '~/src/api/types';
+import { initializeApiForRequest } from '~/src/api/session';
+import { OrderCard } from '~/src/components/order-card/order-card';
 import styles from './route.module.scss';
 
-export type LoaderResponseData = { orders: OrderDetails[] };
-export type LoaderResponse = Promise<TypedResponse<never> | LoaderResponseData>;
+interface LoaderData {
+    orders: Order[];
+}
 
-export async function loader({ request }: LoaderFunctionArgs): LoaderResponse {
-    const api = await initializeEcomApiForRequest(request);
-    if (!api.isLoggedIn()) {
-        return redirect('/login');
+export async function loader({ request }: LoaderFunctionArgs) {
+    const { isAuthenticated } = await initializeApiForRequest(request);
+    if (!isAuthenticated) {
+        throw new Response('Not authenticated', { status: 401 });
     }
 
-    const ordersResponse = await api.getOrders();
-    return { orders: ordersResponse.items };
+    // TODO: Replace with actual API call
+    const mockOrders: Order[] = [
+        {
+            id: '1',
+            items: [
+                {
+                    id: '1',
+                    productId: '1',
+                    productName: 'Sample Product',
+                    quantity: 1,
+                    price: {
+                        amount: 99.99,
+                        formattedAmount: '$99.99'
+                    }
+                }
+            ],
+            priceSummary: {
+                subtotal: {
+                    amount: 99.99,
+                    formattedAmount: '$99.99'
+                },
+                shipping: {
+                    amount: 10,
+                    formattedAmount: '$10.00'
+                },
+                tax: {
+                    amount: 5,
+                    formattedAmount: '$5.00'
+                },
+                total: {
+                    amount: 114.99,
+                    formattedAmount: '$114.99'
+                }
+            },
+            shippingInfo: {
+                address: {
+                    addressLine1: '123 Main St',
+                    city: 'New York',
+                    state: 'NY',
+                    postalCode: '10001',
+                    country: 'USA'
+                },
+                contact: {
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    email: 'john@example.com'
+                }
+            },
+            billingInfo: {
+                address: {
+                    addressLine1: '123 Main St',
+                    city: 'New York',
+                    state: 'NY',
+                    postalCode: '10001',
+                    country: 'USA'
+                },
+                contact: {
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    email: 'john@example.com'
+                }
+            },
+            status: 'completed',
+            createdAt: new Date().toISOString()
+        }
+    ];
+
+    return json<LoaderData>({ orders: mockOrders });
 }
 
-// will be called if app is run in Codux because fetching orders requires
-// user to be logged in but it's currently can't be done through Codux
-export async function coduxLoader(): ReturnType<typeof loader> {
-    return loaderMockData;
-}
-
-export default function MyOrdersPage() {
+export default function MyOrdersRoute() {
     const { orders } = useLoaderData<typeof loader>();
 
-    const formatOrderCreationDate = (date: Date) =>
-        date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-
-    const accordionItems = orders.map((order) => ({
-        header: (
-            <div className={styles.orderHeader}>
-                <div className={styles.orderHeaderSection}>
-                    <span className={styles.orderHeaderSectionName}>Date: </span>
-                    {formatOrderCreationDate(new Date(order._createdDate!))}
-                </div>
-                <div className={styles.orderHeaderSection}>
-                    <span className={styles.orderHeaderSectionName}>Order: </span>
-                    {order.number}
-                </div>
-                <div className={styles.orderHeaderSection}>
-                    <span className={styles.orderHeaderSectionName}>Status: </span>
-                    {order.status}
-                </div>
-                <div className={styles.orderHeaderSection}>
-                    <span className={styles.orderHeaderSectionName}>Total: </span>
-                    {order.priceSummary?.total?.formattedAmount}
-                </div>
+    if (!orders.length) {
+        return (
+            <div className={styles.empty}>
+                <h1 className={styles.title}>My Orders</h1>
+                <p>You haven't placed any orders yet.</p>
             </div>
-        ),
-        content: <OrderSummary key={order._id} order={order} />,
-    }));
+        );
+    }
 
     return (
-        <div>
-            <div className={styles.pageHeader}>
-                <div className={styles.title}>My Orders</div>
-                <div className={styles.message}>
-                    View your order history or check the status of a recent order.
-                </div>
-            </div>
+        <div className={styles.root}>
+            <h1 className={styles.title}>My Orders</h1>
             <div className={styles.orders}>
-                {orders.length > 0 ? (
-                    <>
-                        <div className={styles.orderListHeader}>
-                            <div className={styles.orderListHeaderSection}>Date</div>
-                            <div className={styles.orderListHeaderSection}>Order</div>
-                            <div className={styles.orderListHeaderSection}>Status</div>
-                            <div className={styles.orderListHeaderSection}>Total</div>
-                        </div>
-                        <Accordion items={accordionItems} className={styles.orderList} />
-                    </>
-                ) : (
-                    <div className={styles.emptyStateContainer}>
-                        <div className={styles.emptyStateMessage}>
-                            {"You haven't placed any orders yet"}
-                        </div>
-                        <CategoryLink
-                            categorySlug="all-products"
-                            className={styles.startBrowsingLink}
-                        >
-                            Start Browsing
-                        </CategoryLink>
-                    </div>
-                )}
+                {orders.map((order) => (
+                    <OrderCard key={order.id} order={order} />
+                ))}
             </div>
         </div>
     );
 }
-
-export const meta: MetaFunction = () => {
-    return [
-        { title: 'My Orders | ReClaim' },
-        {
-            name: 'description',
-            content: 'Essential home products for sustainable living',
-        },
-        {
-            property: 'robots',
-            content: 'noindex, nofollow',
-        },
-    ];
-};
-
-export { ErrorBoundary } from '~/src/components/error-page/error-page';

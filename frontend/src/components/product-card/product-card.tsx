@@ -1,59 +1,80 @@
-import type { InventoryStatus } from '~/src/api';
-import styles from './product-card.module.scss';
-import { ProductPrice } from '../product-price/product-price';
+import { Link } from '@remix-run/react';
+import classNames from 'classnames';
+import { InventoryStatus } from '~/src/api/types';
 import { ImagePlaceholderIcon } from '../icons';
+import styles from './product-card.module.scss';
 
-interface ProductCardProps {
+export interface ProductCardProps {
     name: string;
-    /** @format media-url */
+    slug: string;
     imageUrl?: string;
-    /**
-     * Product price formatted with the currency.
-     */
-    price?: string;
-    /**
-     * Discounted product price formatted with the currency.
-     * It is displayed if it's not equal to the main price.
-     */
+    imageAlt?: string;
+    price: string;
     discountedPrice?: string;
     ribbon?: string;
     inventoryStatus?: InventoryStatus;
+    className?: string;
 }
 
-export const ProductCard = ({
+export function ProductCard({
     name,
+    slug,
     imageUrl,
+    imageAlt,
     price,
     discountedPrice,
     ribbon,
     inventoryStatus,
-}: ProductCardProps) => {
-    return (
-        <div className={styles.productCard}>
-            <div className={styles.imageWrapper}>
-                {imageUrl ? (
-                    <img src={imageUrl} alt={name} className={styles.image} />
-                ) : (
-                    <ImagePlaceholderIcon className={styles.imagePlaceholderIcon} />
-                )}
+    className
+}: ProductCardProps) {
+    const hasDiscount = discountedPrice !== undefined;
 
-                {ribbon && <span className={styles.ribbon}>{ribbon}</span>}
+    return (
+        <Link
+            to={`/product-details/${slug}`}
+            className={classNames(styles.root, className)}
+            prefetch="intent"
+        >
+            <div className={styles.imageContainer}>
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt={imageAlt || name}
+                        className={styles.image}
+                    />
+                ) : (
+                    <div className={styles.placeholder}>
+                        <ImagePlaceholderIcon />
+                    </div>
+                )}
+                {ribbon && (
+                    <div className={styles.ribbon}>{ribbon}</div>
+                )}
+                {inventoryStatus === 'OUT_OF_STOCK' && (
+                    <div className={styles.outOfStock}>Out of Stock</div>
+                )}
             </div>
 
-            <div className={styles.name}>{name}</div>
-
-            {inventoryStatus === 'OUT_OF_STOCK' ? (
-                <div className={styles.outOfStock}>Out of stock</div>
-            ) : (
-                <ProductPrice
-                    className={styles.price}
-                    price={price}
-                    discountedPrice={discountedPrice}
-                />
-            )}
-        </div>
+            <div className={styles.info}>
+                <h3 className={styles.name}>{name}</h3>
+                <div className={styles.price}>
+                    {hasDiscount ? (
+                        <>
+                            <span className={styles.discountedPrice}>
+                                {discountedPrice}
+                            </span>
+                            <span className={styles.originalPrice}>
+                                {price}
+                            </span>
+                        </>
+                    ) : (
+                        <span>{price}</span>
+                    )}
+                </div>
+            </div>
+        </Link>
     );
-};
+}
 
 export const ProductCardSkeleton = () => (
     <div className={styles.skeleton}>

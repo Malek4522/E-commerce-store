@@ -1,63 +1,49 @@
 import * as RadixSlider from '@radix-ui/react-slider';
-import type { SliderProps as RadixSliderProps } from '@radix-ui/react-slider';
 import classNames from 'classnames';
-import { FC, useEffect, useRef } from 'react';
+
 import styles from './slider.module.scss';
 
-export const Slider: FC<RadixSliderProps> = (props) => {
-    props = useRadixSliderThumbReleaseFix(props);
-    const value = props.value ?? props.defaultValue;
+export interface SliderProps {
+    min: number;
+    max: number;
+    step: number;
+    value: number[];
+    onChange: (value: number[]) => void;
+    formatLabel?: (min: number, max: number) => string;
+    className?: string;
+}
+
+export const Slider = ({
+    min,
+    max,
+    step,
+    value,
+    onChange,
+    formatLabel,
+    className,
+}: SliderProps) => {
     return (
-        <RadixSlider.Root {...props} className={classNames(styles.root, props.className)}>
-            <RadixSlider.Track className={styles.track}>
-                <RadixSlider.Range className={styles.range} />
-            </RadixSlider.Track>
-            {value?.map((_, i) => <RadixSlider.Thumb key={i} className={styles.thumb} />)}
-        </RadixSlider.Root>
+        <div className={classNames(styles.root, className)}>
+            <RadixSlider.Root
+                className={styles.slider}
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onValueChange={onChange}
+            >
+                <RadixSlider.Track className={styles.track}>
+                    <RadixSlider.Range className={styles.range} />
+                </RadixSlider.Track>
+                {value.map((v, i) => (
+                    <RadixSlider.Thumb key={i} className={styles.thumb} />
+                ))}
+            </RadixSlider.Root>
+            {formatLabel && (
+                <div className={styles.labels}>
+                    <div>{formatLabel(value[0], value[1])}</div>
+                </div>
+            )}
+        </div>
     );
 };
-
-/**
- * The RadixUI Slider doesn't reliably trigger `onValueCommit` after releasing
- * the slider thumb when using a trackpad, especially when dragging quickly.
- * This issue is consistently reproducible on a two-thumb slider by dragging
- * both thumbs to the leftmost position.
- * GitHub issue: https://github.com/radix-ui/primitives/issues/1760
- */
-function useRadixSliderThumbReleaseFix(props: RadixSliderProps): RadixSliderProps {
-    const changedValueRef = useRef<number[]>();
-    const pointerPressedRef = useRef(false);
-    const onValueCommitRef = useRef(props.onValueCommit);
-    onValueCommitRef.current = props.onValueCommit;
-
-    const onValueChange = (value: number[]) => {
-        props.onValueChange?.(value);
-        if (pointerPressedRef.current) {
-            changedValueRef.current = value;
-        } else {
-            props.onValueCommit?.(value);
-        }
-    };
-
-    useEffect(() => {
-        const onDocumentPointerDown = () => {
-            pointerPressedRef.current = true;
-        };
-
-        const onDocumentPointerUp = () => {
-            pointerPressedRef.current = false;
-            if (changedValueRef.current) {
-                onValueCommitRef.current?.(changedValueRef.current);
-                changedValueRef.current = undefined;
-            }
-        };
-
-        const controller = new AbortController();
-        const options = { capture: true, signal: controller.signal };
-        document.addEventListener('pointerdown', onDocumentPointerDown, options);
-        document.addEventListener('pointerup', onDocumentPointerUp, options);
-        return () => controller.abort();
-    }, []);
-
-    return { ...props, onValueChange, onValueCommit: undefined };
-}

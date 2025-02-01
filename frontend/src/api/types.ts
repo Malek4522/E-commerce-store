@@ -3,15 +3,31 @@ export type InventoryStatus = 'IN_STOCK' | 'OUT_OF_STOCK';
 
 export interface Product {
     id: string;
-    title: string;
-    description: string;
-    price: number;
-    discountedPrice?: number;
-    images: string[];
-    stock: number;
+    name: string;
     slug: string;
+    description: string;
+    price: {
+        amount: number;
+        formatted: string;
+        discountedAmount?: number;
+        discountedFormatted?: string;
+    };
+    images: ProductImage[];
+    categoryId: string;
     ribbon?: string;
+    stock: number;
     inventoryStatus?: InventoryStatus;
+    options?: ProductOption[];
+    additionalInfo?: {
+        title: string;
+        content: string;
+    }[];
+}
+
+export interface ProductImage {
+    id: string;
+    url: string;
+    altText?: string;
 }
 
 export interface ProductVariant {
@@ -22,24 +38,58 @@ export interface ProductVariant {
     options: Record<string, string>;
 }
 
+export enum OptionType {
+    color = 'color',
+    size = 'size',
+    style = 'style'
+}
+
+export interface Choice {
+    value: string;
+    description: string;
+    inStock: boolean;
+    visible: boolean;
+}
+
 export interface ProductOption {
     name: string;
-    values: string[];
+    optionType: OptionType;
+    choices: Choice[];
 }
 
 export interface Category {
     id: string;
-    slug: string;
     name: string;
+    slug: string;
     description?: string;
     image?: string;
+}
+
+export interface Image {
+    url: string;
+    altText?: string;
+}
+
+export interface Price {
+    amount: number;
+    formattedAmount: string;
+}
+
+export interface CartItemOption {
+    name: string;
+    value: string;
 }
 
 export interface CartItem {
     id: string;
     productId: string;
+    productName: string;
     quantity: number;
-    price: number;
+    image?: Image;
+    price: Price;
+    fullPrice?: Price;
+    options?: CartItemOption[];
+    isAvailable: boolean;
 }
 
 export interface Cart {
@@ -51,37 +101,63 @@ export interface Cart {
 }
 
 // Order types
-export interface OrderItem {
-    productId: string;
-    title: string;
-    price: number;
-    quantity: number;
-}
-
-export interface CustomerInfo {
-    email: string;
-    firstName: string;
-    lastName: string;
-    address1: string;
-    address2?: string;
+export interface Address {
+    addressLine1: string;
+    addressLine2?: string;
     city: string;
-    state: string;
+    state?: string;
     postalCode: string;
     country: string;
+}
+
+export interface ContactDetails {
+    firstName: string;
+    lastName: string;
     phone?: string;
+    email?: string;
+}
+
+export interface OrderItem {
+    id: string;
+    productId: string;
+    productName: string;
+    quantity: number;
+    image?: Image;
+    price: Price;
+    options?: CartItemOption[];
+}
+
+export interface PriceSummary {
+    subtotal: Price;
+    shipping: Price;
+    tax: Price;
+    total: Price;
+}
+
+export interface ShippingInfo {
+    address: Address;
+    contact: ContactDetails;
+    deliveryTime?: string;
+}
+
+export interface BillingInfo {
+    address: Address;
+    contact: ContactDetails;
 }
 
 export interface Order {
     id: string;
     items: OrderItem[];
-    customer: CustomerInfo;
+    priceSummary: PriceSummary;
+    shippingInfo: ShippingInfo;
+    billingInfo: BillingInfo;
+    buyerNote?: string;
     status: 'pending' | 'processing' | 'completed' | 'cancelled';
-    subtotal: number;
-    total: number;
     createdAt: string;
 }
 
-export interface Address {
+export interface CustomerInfo {
+    email: string;
     firstName: string;
     lastName: string;
     address1: string;
@@ -106,6 +182,26 @@ export interface AuthResponse {
     user: User;
 }
 
+// Product sorting and filtering
+export enum ProductSortBy {
+    NAME_ASC = 'name_asc',
+    NAME_DESC = 'name_desc',
+    PRICE_ASC = 'price_asc',
+    PRICE_DESC = 'price_desc',
+}
+
+export enum ProductFilter {
+    minPrice = 'minPrice',
+    maxPrice = 'maxPrice',
+    search = 'search',
+}
+
+export interface ProductFilters {
+    price?: { min: number; max: number };
+    categories?: string[];
+    search?: string;
+}
+
 // API Client interface
 export interface ApiClient {
     // Products
@@ -113,6 +209,7 @@ export interface ApiClient {
         page?: number;
         limit?: number;
         search?: string;
+        categories?: string[];
     }): Promise<{ items: Product[]; total: number }>;
     
     getProductBySlug(slug: string): Promise<Product | undefined>;

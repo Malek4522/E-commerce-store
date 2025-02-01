@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { cart } from '@wix/ecom';
-import { media } from '@wix/sdk';
+import { CartItem as ICartItem } from '~/src/api/types';
 import { QuantityInput } from '~/src/components/quantity-input/quantity-input';
 import { TrashIcon, ImagePlaceholderIcon, ErrorIcon } from '~/src/components/icons';
 import { Spinner } from '~/src/components/spinner/spinner';
@@ -12,8 +11,7 @@ import { CartItemOptions } from '../cart-item-options/cart-item-options';
 import styles from './cart-item.module.scss';
 
 export interface CartItemProps {
-    item: cart.LineItem;
-    priceBreakdown?: cart.LineItemPricesData;
+    item: ICartItem;
     isUpdating?: boolean;
     onRemove: () => void;
     onQuantityChange: (newQuantity: number) => void;
@@ -21,18 +19,15 @@ export interface CartItemProps {
 
 export const CartItem = ({
     item,
-    priceBreakdown,
     isUpdating = false,
     onRemove,
     onQuantityChange,
 }: CartItemProps) => {
-    const productName = item.productName?.translated ?? '';
-
-    const [quantity, setQuantity] = useState(item.quantity!);
+    const [quantity, setQuantity] = useState(item.quantity);
 
     useEffect(() => {
         if (!isUpdating) {
-            setQuantity(item.quantity!);
+            setQuantity(item.quantity);
         }
     }, [item.quantity, isUpdating]);
 
@@ -48,16 +43,12 @@ export const CartItem = ({
         }
     };
 
-    const image = item.image ? media.getImageUrl(item.image) : undefined;
-
-    const isUnavailable = item.availability?.status === cart.ItemAvailabilityStatus.NOT_AVAILABLE;
-
     return (
         <div className={classNames(styles.root, { [styles.loading]: isUpdating })}>
             <div className={styles.itemContent}>
-                {image ? (
+                {item.image ? (
                     <div className={styles.imageWrapper}>
-                        <img src={image.url} alt={image.altText ?? productName} />
+                        <img src={item.image.url} alt={item.image.altText ?? item.productName} />
                     </div>
                 ) : (
                     <div className={styles.imagePlaceholder}>
@@ -67,19 +58,19 @@ export const CartItem = ({
 
                 <div className={styles.productInfo}>
                     <div className={styles.productNameAndPrice}>
-                        <div className={styles.productName}>{productName}</div>
+                        <div className={styles.productName}>{item.productName}</div>
 
-                        {item.fullPrice?.formattedConvertedAmount && (
+                        {item.fullPrice && (
                             <ProductPrice
-                                price={item.fullPrice?.formattedConvertedAmount}
-                                discountedPrice={item.price?.formattedConvertedAmount}
+                                price={item.fullPrice.formattedAmount}
+                                discountedPrice={item.price.formattedAmount}
                             />
                         )}
 
-                        {item.descriptionLines && item.descriptionLines.length > 0 && (
+                        {item.options && item.options.length > 0 && (
                             <CartItemOptions
                                 className={styles.options}
-                                options={item.descriptionLines}
+                                options={item.options}
                                 visibleOptionsCount={1}
                             />
                         )}
@@ -90,13 +81,13 @@ export const CartItem = ({
                             value={quantity}
                             onChange={handleQuantityChange}
                             className={classNames(styles.quantityInput, {
-                                [styles.quantityInputDisabled]: isUnavailable,
+                                [styles.quantityInputDisabled]: !item.isAvailable,
                             })}
-                            disabled={isUnavailable}
+                            disabled={!item.isAvailable}
                         />
                     </div>
                     <div className={styles.priceBreakdown}>
-                        {priceBreakdown?.lineItemPrice?.formattedConvertedAmount}
+                        {item.price.formattedAmount}
                     </div>
                     <button
                         className={classNames(styles.removeButton, 'iconButton')}
@@ -107,7 +98,7 @@ export const CartItem = ({
                 </div>
             </div>
 
-            {isUnavailable && (
+            {!item.isAvailable && (
                 <div className={styles.unavailableIndication}>
                     <ErrorIcon className={styles.unavailableIcon} />
                     <span>Sorry, this item is no longer available.</span>

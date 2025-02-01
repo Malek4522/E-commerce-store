@@ -1,53 +1,71 @@
+import { forwardRef } from 'react';
 import * as RadixSelect from '@radix-ui/react-select';
 import classNames from 'classnames';
-import { DropdownIcon } from '../icons';
+import { ChevronDownIcon } from '~/src/components/icons';
 
 import styles from './select.module.scss';
 
-export interface SelectProps<V extends string> {
-    value: V;
-    onValueChange: (value: V) => void;
-    placeholder?: string;
-    children: React.ReactNode;
-    className?: string;
-    dropdownClassName?: string;
-    /**
-     * Allows to customize the selected value.
-     * By default the selected item's text will be rendered.
-     */
-    renderValue?: (value: V) => React.ReactNode;
-    hasError?: boolean;
+export interface SelectOption {
+    value: string;
+    label: string;
+    disabled?: boolean;
 }
 
-export const Select = <V extends string>({
-    value,
-    onValueChange,
-    placeholder,
-    children,
-    className,
-    dropdownClassName,
-    renderValue,
-    hasError,
-}: SelectProps<V>) => (
-    <RadixSelect.Root value={value} onValueChange={onValueChange}>
-        <RadixSelect.Trigger
-            className={classNames(styles.trigger, { [styles.hasError]: hasError }, className)}
-        >
-            <RadixSelect.Value placeholder={placeholder}>{renderValue?.(value)}</RadixSelect.Value>
-            <RadixSelect.Icon className={styles.triggerIcon}>
-                <DropdownIcon width={12} />
-            </RadixSelect.Icon>
-        </RadixSelect.Trigger>
+export interface SelectProps {
+    options: SelectOption[];
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    hasError?: boolean;
+    className?: string;
+}
 
-        <RadixSelect.Portal>
-            <RadixSelect.Content
-                className={classNames(styles.content, dropdownClassName)}
-                position="popper"
-            >
-                <RadixSelect.Viewport>{children}</RadixSelect.Viewport>
-            </RadixSelect.Content>
-        </RadixSelect.Portal>
-    </RadixSelect.Root>
+export const Select = forwardRef<HTMLButtonElement, SelectProps>(
+    ({ options, value, onChange, placeholder, hasError, className }, ref) => {
+        const selectedOption = options.find(option => option.value === value);
+
+        return (
+            <RadixSelect.Root value={value} onValueChange={onChange}>
+                <RadixSelect.Trigger
+                    ref={ref}
+                    className={classNames(styles.trigger, className, { [styles.error]: hasError })}
+                >
+                    <RadixSelect.Value placeholder={placeholder}>
+                        {selectedOption ? selectedOption.label : placeholder}
+                    </RadixSelect.Value>
+                    <RadixSelect.Icon className={styles.icon}>
+                        <ChevronDownIcon />
+                    </RadixSelect.Icon>
+                </RadixSelect.Trigger>
+
+                <RadixSelect.Portal>
+                    <RadixSelect.Content className={styles.content}>
+                        <RadixSelect.Viewport className={styles.viewport}>
+                            {placeholder && (
+                                <RadixSelect.Item
+                                    value=""
+                                    disabled
+                                    className={styles.placeholder}
+                                >
+                                    <RadixSelect.ItemText>{placeholder}</RadixSelect.ItemText>
+                                </RadixSelect.Item>
+                            )}
+                            {options.map(option => (
+                                <RadixSelect.Item
+                                    key={option.value}
+                                    value={option.value}
+                                    disabled={option.disabled}
+                                    className={styles.item}
+                                >
+                                    <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
+                                </RadixSelect.Item>
+                            ))}
+                        </RadixSelect.Viewport>
+                    </RadixSelect.Content>
+                </RadixSelect.Portal>
+            </RadixSelect.Root>
+        );
+    }
 );
 
 export interface SelectItemProps {

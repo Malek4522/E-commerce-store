@@ -1,26 +1,77 @@
 import { createContext, useContext, ReactNode } from 'react';
-import { SWRConfig } from 'swr';
-import { CustomApi, createCustomApi } from './adapter';
+import type { ApiClient } from './types';
 
-const ApiContext = createContext<CustomApi | null>(null);
+// Mock implementation of the API client
+const mockApiClient: ApiClient = {
+    getProducts: async ({ page = 1, limit = 10, search = '' }) => {
+        return {
+            items: [],
+            total: 0
+        };
+    },
+    getProductBySlug: async () => undefined,
+    getCategories: async () => [],
+    getCategoryBySlug: async () => null,
+    getCart: async () => undefined,
+    addToCart: async () => ({ id: '', items: [], subtotal: 0, total: 0, tax: 0 }),
+    updateCartItem: async () => ({ id: '', items: [], subtotal: 0, total: 0, tax: 0 }),
+    removeFromCart: async () => ({ id: '', items: [], subtotal: 0, total: 0, tax: 0 }),
+    createOrder: async () => ({
+        id: '',
+        items: [],
+        priceSummary: {
+            subtotal: { amount: 0, formattedAmount: '$0' },
+            shipping: { amount: 0, formattedAmount: '$0' },
+            tax: { amount: 0, formattedAmount: '$0' },
+            total: { amount: 0, formattedAmount: '$0' }
+        },
+        shippingInfo: {
+            address: {
+                addressLine1: '',
+                city: '',
+                postalCode: '',
+                country: ''
+            },
+            contact: {
+                firstName: '',
+                lastName: ''
+            }
+        },
+        billingInfo: {
+            address: {
+                addressLine1: '',
+                city: '',
+                postalCode: '',
+                country: ''
+            },
+            contact: {
+                firstName: '',
+                lastName: ''
+            }
+        },
+        status: 'pending',
+        createdAt: new Date().toISOString()
+    }),
+    getOrder: async () => undefined,
+    login: async () => ({ token: '', user: { id: '', email: '' } }),
+    logout: async () => {},
+    register: async () => ({ token: '', user: { id: '', email: '' } }),
+    getCurrentUser: async () => undefined,
+    updateUser: async () => ({ id: '', email: '' }),
+    forgotPassword: async () => {},
+    resetPassword: async () => {}
+};
+
+const ApiContext = createContext<ApiClient>(mockApiClient);
+
+export function ApiProvider({ children }: { children: ReactNode }) {
+    return (
+        <ApiContext.Provider value={mockApiClient}>
+            {children}
+        </ApiContext.Provider>
+    );
+}
 
 export function useApi() {
-    const api = useContext(ApiContext);
-    if (!api) throw new Error('useApi must be used within ApiProvider');
-    return api;
-}
-
-interface Props {
-    children: ReactNode;
-    baseUrl?: string;
-}
-
-export function ApiProvider({ children, baseUrl }: Props) {
-    const api = createCustomApi(baseUrl);
-
-    return (
-        <SWRConfig value={{ provider: () => new Map() }}>
-            <ApiContext.Provider value={api}>{children}</ApiContext.Provider>
-        </SWRConfig>
-    );
+    return useContext(ApiContext);
 } 

@@ -1,13 +1,66 @@
-.item:not(:last-child) {
-    border-bottom: 1px solid rgba(118, 113, 101, 0.3);
+.root {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.item {
+    & + & {
+        border-top: 1px solid #e5e7eb;
+    }
+
+    &.open .header {
+        background-color: #f9fafb;
+    }
 }
 
 .header {
-    min-height: 48px;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 1rem;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #111827;
     cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+
+    &:hover {
+        background-color: #f9fafb;
+    }
+
+    &:focus {
+        outline: none;
+        background-color: #f9fafb;
+    }
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: transform 0.2s ease-in-out;
+
+    .open & {
+        transform: rotate(180deg);
+    }
+}
+
+.content {
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    color: #4b5563;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.item:not(:last-child) {
+    border-bottom: 1px solid rgba(118, 113, 101, 0.3);
 }
 
 .headerContent {
@@ -23,17 +76,6 @@
 
 .collapseIcon {
     transform: rotate(180deg);
-}
-
-.content {
-    --transitionDuration: 0.4s;
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows var(--transitionDuration) ease-in-out;
-}
-
-.expanded {
-    grid-template-rows: 1fr;
 }
 
 .contentExpander {

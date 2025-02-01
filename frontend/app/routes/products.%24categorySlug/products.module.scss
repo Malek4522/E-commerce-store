@@ -1,0 +1,9 @@
+.root {
+    padding: 2rem;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2rem;
+} 

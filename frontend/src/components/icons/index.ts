@@ -1,6 +1,7 @@
 export { ArrowRightIcon } from './arrow-right-icon';
 export { CartIcon } from './cart-icon/cart-icon';
 export { ChevronRightIcon } from './chevron-right-icon';
+export { ChevronDownIcon } from './chevron-down-icon';
 export { CrossSmallIcon } from './cross-small-icon';
 export { CrossIcon } from './cross-icon';
 export { DropdownIcon } from './dropdown-icon';

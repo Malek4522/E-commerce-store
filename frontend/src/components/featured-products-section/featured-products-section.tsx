@@ -1,11 +1,9 @@
 import classNames from 'classnames';
 import { ProductCard, ProductCardSkeleton } from '~/src/components/product-card/product-card';
-import { ProductLink } from '~/src/components/product-link/product-link';
 import { FadeIn, Reveal } from '~/src/components/visual-effects';
-import { useCategoryDetails } from '~/src/wix/categories';
-import { getProductImageUrl, useProducts } from '~/src/wix/products';
+import { useCategory } from '~/src/api/categories';
+import { useProducts } from '~/src/api/products';
 import styles from './featured-products-section.module.scss';
-import { InventoryStatus } from '@wix/stores_products/build/cjs/src/stores-catalog-v1-product-products.universal';
 
 interface FeaturedProductsSectionProps {
     categorySlug: string;
@@ -17,26 +15,29 @@ interface FeaturedProductsSectionProps {
 
 export const FeaturedProductsSection = (props: FeaturedProductsSectionProps) => {
     const { title, description, productCount = 4, categorySlug, className } = props;
-    const { data: category } = useCategoryDetails(categorySlug);
-    const { data: products } = useProducts({ categorySlug, limit: productCount });
+    const { data: category } = useCategory(categorySlug);
+    const { data: products, isLoading } = useProducts({ categorySlug, limit: productCount });
 
     return (
         <div className={classNames(styles.root, className)}>
             <FadeIn className={styles.header} duration={1.8}>
                 <h3 className={styles.headerTitle}>{title ?? category?.name ?? categorySlug}</h3>
+                {description && <p className={styles.headerDescription}>{description}</p>}
             </FadeIn>
             <Reveal className={styles.products} direction="down" duration={1.4}>
-                {products
-                    ? products.items.map((product) => (
-                          <ProductLink key={product._id} productSlug={product.slug!}>
-                              <ProductCard
-                                  name={product.name!}
-                                  imageUrl={getProductImageUrl(product, { minHeight: 700 })}
-                                  price={product.priceData?.formatted?.price}
-                                  discountedPrice={product.priceData?.formatted?.discountedPrice}
-                                  ribbon={product.ribbon ?? undefined}
-                              />
-                          </ProductLink>
+                {!isLoading && products
+                    ? products.map((product) => (
+                          <ProductCard
+                              key={product.id}
+                              name={product.name}
+                              slug={product.slug}
+                              imageUrl={product.images[0]?.url}
+                              imageAlt={product.images[0]?.altText}
+                              price={product.price.formatted}
+                              discountedPrice={product.price.discountedFormatted}
+                              ribbon={product.ribbon}
+                              inventoryStatus={product.inventoryStatus}
+                          />
                       ))
                     : Array.from({ length: productCount }).map((_, i) => (
                           <ProductCardSkeleton key={i} />

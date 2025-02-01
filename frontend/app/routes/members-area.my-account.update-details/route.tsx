@@ -1,39 +1,77 @@
-import { ActionFunctionArgs, redirect, TypedResponse } from '@remix-run/node';
-import { initializeEcomApiForRequest } from '~/src/wix/ecom/session';
+import { json, type ActionFunctionArgs } from '@remix-run/node';
+import { Form, useActionData } from '@remix-run/react';
+import { Input } from '~/src/components/input/input';
+import { updateUser } from '~/src/api/users';
+import { initializeApiForRequest } from '~/src/api/session';
+import { getErrorMessage } from '~/src/utils';
+import styles from './route.module.scss';
 
-export async function action({ request }: ActionFunctionArgs) {
-    const api = await initializeEcomApiForRequest(request);
-    const formData = await request.formData();
-
-    const userId = formData.get('userId') as string | undefined;
-
-    if (!userId) {
-        throw new Error('Missing user id');
-    }
-
-    const firstName = formData.get('firstName') as string | undefined;
-    const lastName = formData.get('lastName') as string | undefined;
-    const phoneNumber = formData.get('phoneNumber') as string | undefined;
-
-    await api.updateUser(userId, {
-        contact: {
-            firstName,
-            lastName,
-            phones: phoneNumber ? [phoneNumber] : [],
-        },
-    });
-
-    return redirect('/members-area/my-account');
+interface ActionData {
+    success?: boolean;
+    error?: string;
 }
 
-// will be called if app is run in Codux because updating user details
-// requires user to be logged in but it's currently can't be done through Codux
-export async function coduxAction(): ReturnType<typeof action> {
-    // using redirect helper here causes warning during build process
-    return new Response(null, {
-        status: 302,
-        headers: {
-            Location: '/members-area/my-account',
-        },
-    }) as TypedResponse<never>;
+export async function action({ request }: ActionFunctionArgs) {
+    const { isAuthenticated } = await initializeApiForRequest(request);
+    if (!isAuthenticated) {
+        return json<ActionData>({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    try {
+        const formData = await request.formData();
+        const userData = {
+            firstName: formData.get('firstName') as string,
+            lastName: formData.get('lastName') as string,
+            email: formData.get('email') as string,
+            phone: formData.get('phone') as string,
+        };
+
+        await updateUser(userData);
+        return json<ActionData>({ success: true });
+    } catch (error) {
+        return json<ActionData>({ error: getErrorMessage(error) }, { status: 400 });
+    }
+}
+
+export default function UpdateDetailsRoute() {
+    const actionData = useActionData<typeof action>();
+
+    return (
+        <div className={styles.root}>
+            <h1 className={styles.title}>Update Details</h1>
+            <Form method="post" className={styles.form}>
+                <Input
+                    name="firstName"
+                    label="First Name"
+                    required
+                    hasError={!!actionData?.error}
+                />
+                <Input
+                    name="lastName"
+                    label="Last Name"
+                    required
+                    hasError={!!actionData?.error}
+                />
+                <Input
+                    name="email"
+                    type="email"
+                    label="Email"
+                    required
+                    hasError={!!actionData?.error}
+                />
+                <Input
+                    name="phone"
+                    type="tel"
+                    label="Phone"
+                    hasError={!!actionData?.error}
+                />
+                {actionData?.error && (
+                    <div className={styles.error}>{actionData.error}</div>
+                )}
+                <button type="submit" className={styles.submit}>
+                    Update Details
+                </button>
+            </Form>
+        </div>
+    );
 }

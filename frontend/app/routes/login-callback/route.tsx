@@ -1,40 +1,28 @@
-import { LoaderFunctionArgs, redirect } from '@remix-run/node';
-import { commitSession, getSession, initializeEcomApiForRequest } from '~/src/wix/ecom/session';
+import { redirect, type LoaderFunctionArgs } from '@remix-run/node';
+import { getSession, commitSession } from '~/src/api/session';
+import { login } from '~/src/api/users';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-    const session = await getSession(request.headers.get('Cookie'));
-    const storedOauthData = session.get('oAuthData');
+    const url = new URL(request.url);
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
 
-    if (storedOauthData === undefined) {
+    if (!code || !state) {
         return redirect('/login');
     }
 
-    const api = await initializeEcomApiForRequest(request);
-    const wixClient = api.getWixClient();
+    try {
+        const { token, user } = await login(code, state);
+        const session = await getSession(request);
+        session.set('token', token);
+        session.set('userId', user.id);
 
-    const returnedOAuthData = wixClient.auth.parseFromUrl(request.url, 'query');
-    if (returnedOAuthData.error) {
-        throw new Error(`Error: ${returnedOAuthData.errorDescription}`);
+        return redirect('/members-area/my-account', {
+            headers: {
+                'Set-Cookie': await commitSession(session),
+            },
+        });
+    } catch (error) {
+        return redirect('/login');
     }
-
-    const memberTokens = await wixClient.auth.getMemberTokens(
-        returnedOAuthData.code,
-        returnedOAuthData.state,
-        storedOauthData,
-    );
-    wixClient.auth.setTokens(memberTokens);
-
-    session.set('wixSessionTokens', memberTokens);
-
-    const redirectUrl = new URL(storedOauthData.originalUri || new URL(request.url).host);
-
-    // Append a dummy query parameter to avoid preserving sensitive auth params (e.g., `code`, `state`)
-    // Some hosts (e.g., Netlify) retain original query params on redirects, which could expose them in the URL
-    redirectUrl.searchParams.append('login', 'success');
-
-    return redirect(redirectUrl.toString(), {
-        headers: {
-            'Set-Cookie': await commitSession(session),
-        },
-    });
 }
