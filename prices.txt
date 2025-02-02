@@ -1,0 +1,63 @@
+Tarif De Livraison E-Commerce Départ DE BLIDA
+
+# | Wilaya                 | Tarif à domicile | Stopdesk (Au Bureau) | Annulé (Retour)
+--|------------------------|------------------|----------------------|-----------------
+1  | Adrar                  | 1400 DA          | 900 DA               | 200 DA          
+2  | Chlef                  | 750 DA           | 450 DA               | 200 DA          
+3  | Laghouat               | 950 DA           | 600 DA               | 200 DA          
+4  | Oum El Bouaghi         | 800 DA           | 450 DA               | 200 DA          
+5  | Batna                  | 800 DA           | 450 DA               | 200 DA          
+6  | Béjaïa                 | 800 DA           | 450 DA               | 200 DA          
+7  | Biskra                 | 950 DA           | 600 DA               | 200 DA          
+8  | Béchar                 | 1100 DA          | 650 DA               | 200 DA          
+9  | Blida                  | 400 DA           | 300 DA               | 200 DA          
+10 | Bouira                 | 750 DA           | 450 DA               | 200 DA          
+11 | Tamanrasset            | 1600 DA          | 1050 DA              | 250 DA          
+12 | Tébessa                | 850 DA           | 450 DA               | 200 DA          
+13 | Tlemcen                | 800 DA           | 450 DA               | 200 DA          
+14 | Tiaret                 | 800 DA           | 450 DA               | 200 DA          
+15 | Tizi Ouzou             | 750 DA           | 450 DA               | 200 DA          
+16 | Alger                  | 500 DA           | 300 DA               | 200 DA          
+17 | Djelfa                 | 950 DA           | 600 DA               | 200 DA          
+18 | Jijel                  | 800 DA           | 450 DA               | 200 DA          
+19 | Sétif                  | 750 DA           | 450 DA               | 200 DA          
+20 | Saïda                  | 800 DA           | 450 DA               | 200 DA          
+21 | Skikda                 | 800 DA           | 450 DA               | 200 DA          
+22 | Sidi Bel Abbès         | 800 DA           | 450 DA               | 200 DA          
+23 | Annaba                 | 800 DA           | 450 DA               | 200 DA          
+24 | Guelma                 | 800 DA           | 450 DA               | 200 DA          
+25 | Constantine            | 800 DA           | 450 DA               | 200 DA          
+26 | Médéa                  | 750 DA           | 450 DA               | 200 DA          
+27 | Mostaganem             | 800 DA           | 450 DA               | 200 DA          
+28 | M’Sila                 | 850 DA           | 500 DA               | 200 DA          
+29 | Mascara                | 800 DA           | 450 DA               | 200 DA          
+30 | Ouargla                | 950 DA           | 600 DA               | 200 DA          
+31 | Oran                   | 800 DA           | 450 DA               | 200 DA          
+32 | El Bayadh              | 1100 DA          | 600 DA               | 200 DA          
+33 | Illizi                 | -                | -                    | -               
+34 | Bordj Bou Arréridj     | 750 DA           | 450 DA               | 200 DA          
+35 | Boumerdès              | 750 DA           | 450 DA               | 200 DA          
+36 | El Tarf                | 800 DA           | 450 DA               | 200 DA          
+37 | Tindouf                | -                | -                    | 200 DA          
+38 | Tissemsilt             | 800 DA           | _                    | 200 DA          
+39 | El Oued                | 950 DA           | 600 DA               | 200 DA          
+40 | Khenchela              | 800 DA           | -                    | 200 DA          
+41 | Souk Ahras             | 800 DA           | 450 DA               | 200 DA          
+42 | Tipaza                 | 750 DA           | 450 DA               | 200 DA          
+43 | Mila                   | 800 DA           | 450 DA               | 200 DA          
+44 | Ain Defla              | 750 DA           | 450 DA               | 200 DA          
+45 | Naâma                  | 1100 DA          | 600 DA               | 200 DA          
+46 | Ain Témouchent         | 800 DA           | 450 DA               | 200 DA          
+47 | Ghardaïa               | 950 DA           | 600 DA               | 200 DA          
+48 | Relizane               | 800 DA           | 450 DA               | 200 DA          
+49 | Timmimoun              | 1400 DA          | -                    | 200 DA         
+50 | Bordj Badji Mokhtar    | -                | -                    | -         
+51 | Ouled Djellal          | 950 DA           | 600 DA               | 200 DA          
+52 | Béni Abbès             | 1000 DA          | -                    | 200 DA          
+53 | In Salah               | 1600 DA          | -                    | 200 DA          
+54 | In Guezzam             | 1600 DA          | -                    | 200 DA          
+55 | Touggourt              | 950 DA           | 600 DA               | 200 DA          
+56 | Djanet                 | -                | -                    | -          
+57 | M’Ghair                | 950 DA           | -                    | 200 DA          
+58 | El Menia               | 1000 DA          | -                    | 200 DA          
+

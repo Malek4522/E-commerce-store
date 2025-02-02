@@ -4,6 +4,7 @@ import type { Product, ProductVariant, ProductLink } from '../../api/admin/types
 import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../api/admin/products';
 import styles from './route.module.scss';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import { Link, useNavigate, useSearchParams } from '@remix-run/react';
 
 const IMGBB_API_KEY = "d70392dd5af4640814b4b07ef4761aa0";
 
@@ -11,6 +12,12 @@ const IMGBB_API_KEY = "d70392dd5af4640814b4b07ef4761aa0";
 const getYouTubeVideoId = (url: string) => {
     const match = url.match(/[?&]v=([^&]+)/);
     return match ? match[1] : null;
+};
+
+const formatPrice = (price: number): string => {
+    const [whole, decimal] = price.toFixed(2).split('.');
+    const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return `${formattedWhole},${decimal} DA`;
 };
 
 // Media Preview Modal Component
@@ -320,10 +327,10 @@ function EditProductModal({
                         <label>Price (DA):</label>
                         <input
                             type="number"
-                            value={editedProduct.price / 100}
-                            onChange={e => setEditedProduct({...editedProduct, price: Math.round(parseFloat(e.target.value) * 100)})}
+                            value={editedProduct.price}
+                            onChange={e => setEditedProduct({...editedProduct, price: Math.round(parseFloat(e.target.value))})}
                             min="0"
-                            step="0.01"
+                            step="1"
                             required
                         />
                     </div>
@@ -332,16 +339,16 @@ function EditProductModal({
                         <div className={styles.priceInputGroup}>
                             <input
                                 type="number"
-                                value={editedProduct.salePrice ? editedProduct.salePrice / 100 : ''}
+                                value={editedProduct.salePrice || ''}
                                 onChange={e => {
                                     const value = e.target.value;
                                     setEditedProduct({
                                         ...editedProduct, 
-                                        salePrice: value ? Math.round(parseFloat(value) * 100) : undefined
+                                        salePrice: value ? Math.round(parseFloat(value)) : undefined
                                     });
                                 }}
                                 min="0"
-                                step="0.01"
+                                step="1"
                                 placeholder="Optional"
                             />
                             {editedProduct.salePrice && (
@@ -563,14 +570,23 @@ function EditProductModal({
 
 export default function AdminProducts() {
     const [products, setProducts] = useState<Product[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchFilters, setSearchFilters] = useState({
+        query: '',
+        type: '',
+        isNew: ''
+    });
     const [selectedMedia, setSelectedMedia] = useState<ProductLink | null>(null);
     const [viewingAllMedia, setViewingAllMedia] = useState(false);
     const [currentMediaItems, setCurrentMediaItems] = useState<ProductLink[]>([]);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const [productToEdit, setProductToEdit] = useState<Product | null>(null);
     const [showNewProductModal, setShowNewProductModal] = useState(false);
+    const [searchParams] = useSearchParams();
+    const productId = searchParams.get('id');
+
+    const navigate = useNavigate();
 
     // Memoize handlers to prevent unnecessary re-renders
     const handleCloseModal = useCallback(() => {
@@ -629,10 +645,6 @@ export default function AdminProducts() {
     }, []);
 
     // Memoize utility functions
-    const formatPrice = useCallback((price: number) => {
-        return `${(price / 100).toFixed(2)} DA`;
-    }, []);
-
     const getTotalStock = useCallback((variants: ProductVariant[]) => {
         return variants.reduce((sum: number, variant: ProductVariant) => sum + variant.quantity, 0);
     }, []);
@@ -680,7 +692,7 @@ export default function AdminProducts() {
 
         const loadProducts = async () => {
             try {
-                setIsLoading(true);
+                setLoading(true);
                 setError(null);
                 const data = await fetchProducts();
                 if (mounted) {
@@ -692,7 +704,7 @@ export default function AdminProducts() {
                 }
             } finally {
                 if (mounted) {
-                    setIsLoading(false);
+                    setLoading(false);
                 }
             }
         };
@@ -704,44 +716,90 @@ export default function AdminProducts() {
         };
     }, []);
 
+    useEffect(() => {
+        if (productId) {
+            const product = products.find(p => p._id === productId);
+            if (product) {
+                setProductToEdit(product);
+            }
+        }
+    }, [productId, products]);
+
+    function filterProducts(products: Product[]): Product[] {
+        return products.filter(product => {
+            const matchesQuery = searchFilters.query.toLowerCase().trim() === '' || 
+                product.name.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
+                product.description?.toLowerCase().includes(searchFilters.query.toLowerCase());
+
+            const matchesType = searchFilters.type === '' || product.type === searchFilters.type;
+            const matchesNew = searchFilters.isNew === '' || 
+                (searchFilters.isNew === 'true' ? product.isNew : !product.isNew);
+
+            return matchesQuery && matchesType && matchesNew;
+        });
+    }
+
     return (
         <ProtectedRoute>
             <div className={styles.productsPage}>
                 <header className={styles.header}>
-                    <h1>Products Management</h1>
-                    <button 
-                        className={styles.addButton}
-                        onClick={() => setShowNewProductModal(true)}
-                    >
-                        Add New Product
-                    </button>
+                    <div className={styles.headerContent}>
+                        <div className={styles.headerLeft}>
+                            <h1>Admin Dashboard</h1>
+                            <nav className={styles.nav}>
+                                <Link to="/admin/orders" className={styles.navLink}>
+                                    Orders
+                                </Link>
+                                <Link to="/admin/products" className={`${styles.navLink} ${styles.active}`}>
+                                    Products
+                                </Link>
+                            </nav>
+                        </div>
+                        <button 
+                            onClick={() => setShowNewProductModal(true)}
+                            className={styles.addButton}
+                        >
+                            Add Product
+                        </button>
+                    </div>
                 </header>
 
                 {error && (
                     <div className={styles.error}>
                         {error}
+                        <button onClick={() => {/* TODO: Retry loading products */}}>Retry</button>
                     </div>
                 )}
 
                 <div className={styles.content}>
-                    {isLoading ? (
-                        <div className={styles.loading}>Loading products...</div>
-                    ) : (
-                        <div className={styles.tableWrapper}>
-                            <table className={styles.table}>
-                                <thead>
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>Media</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Total Stock</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
                                     <tr>
-                                        <th>Media</th>
-                                        <th>Name</th>
-                                        <th>Type</th>
-                                        <th>Price</th>
-                                        <th>Total Stock</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
+                                        <td colSpan={7} className={styles.emptyState}>
+                                            Loading products...
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {products.map((product) => (
+                                ) : products.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className={styles.emptyState}>
+                                            No products found
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filterProducts(products).map((product) => (
                                         <tr key={product._id}>
                                             <td data-label="Media">{renderMediaLinks(product.links)}</td>
                                             <td data-label="Name">{product.name}</td>
@@ -775,11 +833,11 @@ export default function AdminProducts() {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <MediaPreviewModal 
                     media={selectedMedia}

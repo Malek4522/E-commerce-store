@@ -24,4 +24,29 @@ export interface Product {
     sizes: string[];
     createdAt: string;
     updatedAt: string;
+}
+
+export interface Order {
+    _id: string;
+    product: {
+        _id: string;
+        name: string;
+        price: number;
+        links: ProductLink[];
+        slug: string;
+        variants: ProductVariant[];
+        colors: string[];
+        sizes: string[];
+    };
+    color: string;
+    size: string;
+    fullName: string;
+    phoneNumber: string;
+    address?: string;
+    state: string;
+    region: string;
+    delivery: 'home' | 'center';
+    status: 'waiting' | 'delivering' | 'delivered' | 'canceled';
+    createdAt: string;
+    updatedAt: string;
 } 
