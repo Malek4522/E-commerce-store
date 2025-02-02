@@ -208,10 +208,38 @@ const setProductNew = async (req, res) => {
     }
 }
 
+// @desc    Get a single product by ID
+// @route   GET /api/products/admin/:id
+// @access  Private/Admin
+const getProduct = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: product
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createProduct,
     deleteProduct,
     updateProduct,
     getProducts,
-    setProductNew
+    setProductNew,
+    getProduct
 };

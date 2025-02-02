@@ -26,16 +26,41 @@ const orderSchema = new mongoose.Schema({
         required: [true, 'Phone number is required'],
         trim: true
     },
-    address: {
+    state: {
         type: String,
-        required: [true, 'Address is required'],
+        required: [true, 'State is required'],
+        enum: [
+            'Adrar', 'Chlef', 'Laghouat', 'Oum El Bouaghi', 'Batna', 'Béjaïa', 'Biskra',
+            'Béchar', 'Blida', 'Bouira', 'Tamanrasset', 'Tébessa', 'Tlemcen', 'Tiaret',
+            'Tizi Ouzou', 'Alger', 'Djelfa', 'Jijel', 'Sétif', 'Saïda', 'Skikda',
+            'Sidi Bel Abbès', 'Annaba', 'Guelma', 'Constantine', 'Médéa', 'Mostaganem',
+            'M\'Sila', 'Mascara', 'Ouargla', 'Oran', 'El Bayadh', 'Illizi', 'Bordj Bou Arréridj',
+            'Boumerdès', 'El Tarf', 'Tindouf', 'Tissemsilt', 'El Oued', 'Khenchela',
+            'Souk Ahras', 'Tipaza', 'Mila', 'Ain Defla', 'Naâma', 'Ain Témouchent',
+            'Ghardaïa', 'Relizane', 'Timmimoun', 'Bordj Badji Mokhtar', 'Ouled Djellal',
+            'Béni Abbès', 'In Salah', 'In Guezzam', 'Touggourt', 'Djanet', 'M\'Ghair',
+            'El Menia'
+        ],
         trim: true
     },
+    region: {
+        type: String,
+        required: [true, 'Region is required'], 
+        trim: true
+    },
+    
     status: {
         type: String,
         required: [true, 'Status is required'],
         enum: ['waiting', 'delivering', 'delivered', 'canceled'],
         default: 'waiting'
+    }
+    ,
+    delivery: {
+        type: String,
+        required: [true, 'Delivery type is required'],
+        enum: ['home', 'center'],
+        default: 'home'
     }
 }, {
     timestamps: true

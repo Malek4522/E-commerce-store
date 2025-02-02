@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 // Create a new order
 exports.createOrder = async (req, res) => {
     try {
-        const { productId, color, size, fullName, phoneNumber, address } = req.body;
+        const { productId, color, size, fullName, phoneNumber, state, region, delivery, status } = req.body;
 
         // Validate product existence
         const product = await Product.findById(productId);
@@ -25,14 +25,20 @@ exports.createOrder = async (req, res) => {
             size,
             fullName,
             phoneNumber,
-            address
+            state,
+            region,
+            delivery,
+            status: status || 'waiting'
         });
 
         await order.save();
         
+        // Populate the product field before sending response
+        const populatedOrder = await Order.findById(order._id).populate('product');
+        
         res.status(201).json({
             success: true,
-            data: order
+            data: populatedOrder
         });
     } catch (error) {
         res.status(400).json({
@@ -134,7 +140,7 @@ exports.deleteOrder = async (req, res) => {
             });
         }
 
-        await order.remove();
+        await Order.deleteOne({ _id: order._id });
 
         res.status(200).json({
             success: true,
