@@ -20,7 +20,7 @@ export const ShareProductLinks = ({ productCanonicalUrl, className }: ShareProdu
             </a>
 
             <a
-                href={`http://www.facebook.com/sharer.php?u=${productEncodedUrl}`}
+                href={`https://www.facebook.com/sharer.php?u=${productEncodedUrl}`}
                 target="_blank"
                 rel="noreferrer"
             >
@@ -28,7 +28,7 @@ export const ShareProductLinks = ({ productCanonicalUrl, className }: ShareProdu
             </a>
 
             <a
-                href={`http://pinterest.com/pin/create/button/?url=${productEncodedUrl}`}
+                href={`https://pinterest.com/pin/create/button/?url=${productEncodedUrl}`}
                 target="_blank"
                 rel="noreferrer"
             >

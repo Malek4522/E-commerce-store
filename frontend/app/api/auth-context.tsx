@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/api/product/admin', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/product/admin`, {
                 credentials: 'include'
             });
             
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (password: string) => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/auth`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

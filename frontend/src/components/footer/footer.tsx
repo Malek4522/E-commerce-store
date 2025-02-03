@@ -79,7 +79,7 @@ export const Footer = ({ className }: FooterProps) => {
                 <ul className={styles.navList}>
                     <li>
                         <Link
-                            to="https://www.facebook.com/WixStudio"
+                            to={import.meta.env.VITE_FACEBOOK_URL}
                             className={styles.navItem}
                             target="_blank"
                         >
@@ -88,7 +88,7 @@ export const Footer = ({ className }: FooterProps) => {
                     </li>
                     <li>
                         <Link
-                            to="https://www.instagram.com/boutique_lyes_09/"
+                            to={import.meta.env.VITE_INSTAGRAM_URL}
                             className={styles.navItem}
                             target="_blank"
                         >
@@ -97,7 +97,7 @@ export const Footer = ({ className }: FooterProps) => {
                     </li>
                     <li>
                         <Link
-                            to="https://www.tiktok.com/@boutiquelyes09?_t=8r1pOISqwFR&_r=1"
+                            to={import.meta.env.VITE_TIKTOK_URL}
                             className={styles.navItem}
                             target="_blank"
                         >
@@ -106,7 +106,7 @@ export const Footer = ({ className }: FooterProps) => {
                     </li>
                     <li>
                         <Link
-                            to="https://wa.me/0666104876"
+                            to={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}`}
                             className={styles.navItem}
                             target="_blank"
                         >

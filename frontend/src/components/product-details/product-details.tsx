@@ -490,7 +490,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
 
                     <div className={styles.socialLinks}>
                         <a 
-                            href={`https://www.instagram.com/boutique_lyes_09/`}
+                            href={import.meta.env.VITE_FACEBOOK_URL}
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className={styles.socialLink}
@@ -500,7 +500,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                             </svg>
                         </a>
                         <a 
-                            href="https://www.instagram.com/boutique_lyes_09/" 
+                            href={import.meta.env.VITE_INSTAGRAM_URL}
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className={styles.socialLink}
@@ -510,7 +510,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                             </svg>
                         </a>
                         <a 
-                            href="https://www.tiktok.com/@boutiquelyes09?_t=8r1pOISqwFR&_r=1" 
+                            href={import.meta.env.VITE_TIKTOK_URL}
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className={styles.socialLink}
@@ -520,7 +520,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                             </svg>
                         </a>
                         <a 
-                            href={`https://api.whatsapp.com/send?phone=213666104876&text=${encodeURIComponent(`Check out this product: ${import.meta.env.VITE_PUBLIC_URL}/product-details/${product.id}`)}`}
+                            href={`https://api.whatsapp.com/send?phone=${import.meta.env.VITE_WHATSAPP_NUMBER}&text=${encodeURIComponent(`Check out this product: ${import.meta.env.VITE_PUBLIC_URL}/product-details/${product.id}`)}`}
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className={styles.socialLink}

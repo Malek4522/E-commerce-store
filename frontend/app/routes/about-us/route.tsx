@@ -17,7 +17,7 @@ export default function AboutUsPage() {
             <FadeIn duration={2}>
                 <img
                     className={styles.image}
-                    src="https://static.wixstatic.com/media/c837a6_825d7dbd2e634114906169b9674b56fa~mv2.jpg"
+                    src={import.meta.env.VITE_ABOUT_US_IMAGE}
                     alt=""
                 />
             </FadeIn>

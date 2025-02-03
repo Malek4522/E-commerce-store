@@ -10,7 +10,13 @@
     "lint": "eslint --ignore-path .gitignore .",
     "start": "remix-serve ./build/server/index.js",
     "typecheck": "tsc --noEmit",
-    "prettier:check": "prettier . -c"
+    "prettier:check": "prettier . -c",
+    "build:prod": "NODE_ENV=production remix vite:build",
+    "start:prod": "NODE_ENV=production remix-serve ./build/server/index.js",
+    "clean": "rm -rf build node_modules",
+    "prebuild:prod": "npm run typecheck && npm run lint",
+    "analyze": "vite build --mode analyze",
+    "test:build": "npm run build:prod && npm run start:prod"
   },
   "dependencies": {
     "@blueprintjs/core": "^5.16.2",

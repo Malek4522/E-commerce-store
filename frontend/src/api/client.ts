@@ -4,7 +4,7 @@ export class CustomApiClient implements ApiClient {
     private baseUrl: string;
     private token: string | null;
 
-    constructor(baseUrl: string = typeof window === 'undefined' ? 'http://localhost:5000/api' : '/api') {
+    constructor(baseUrl: string = typeof window === 'undefined' ? import.meta.env.VITE_API_URL : '/api') {
         this.baseUrl = baseUrl;
         this.token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     }

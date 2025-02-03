@@ -6,8 +6,6 @@ import styles from './route.module.scss';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { Link, useNavigate, useSearchParams } from '@remix-run/react';
 
-const IMGBB_API_KEY = "d70392dd5af4640814b4b07ef4761aa0";
-
 // Utility functions
 const getYouTubeVideoId = (url: string) => {
     const match = url.match(/[?&]v=([^&]+)/);
@@ -235,7 +233,7 @@ function EditProductModal({
             formData.append('image', file);
 
             try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`, {
                     method: 'POST',
                     body: formData
                 });

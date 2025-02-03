@@ -47,7 +47,7 @@ export default function ProductDetailsRoute() {
                 canonicalUrl={`${import.meta.env.VITE_PUBLIC_URL}/product-details/${product.id}`}
                 breadcrumbs={[
                     { title: 'Home', to: '/' },
-                    { title: 'Products', to: '/products' },
+                    { title: 'Products', to: '/products/all-products' },
                     { title: product.name, to: `/product-details/${product.id}` }
                 ]}
             />
