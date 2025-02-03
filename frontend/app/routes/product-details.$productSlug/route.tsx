@@ -58,7 +58,7 @@ export default function ProductDetailsRoute() {
 export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
     if (!data) {
         return [
-            { title: 'Product Not Found | ReClaim' },
+            { title: 'Product Not Found | MZ Prestige' },
             {
                 name: 'description',
                 content: 'The requested product could not be found.',
@@ -67,7 +67,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
     }
 
     return [
-        { title: 'Product Details | ReClaim' },
+        { title: 'Product Details | MZ Prestige' },
         {
             name: 'description',
             content: 'View product details',

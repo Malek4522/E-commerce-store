@@ -106,7 +106,7 @@ export default function App() {
 }
 
 export const meta: MetaFunction = () => {
-    const title = 'ReClaim: Home Goods Store';
+    const title = 'MZ Prestige: Home Goods Store';
     const description = 'Essential home products for sustainable living';
 
     return [

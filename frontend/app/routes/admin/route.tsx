@@ -14,10 +14,10 @@ export default function AdminLayout() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: 'Admin Dashboard - ReClaim' },
+        { title: 'Admin Dashboard - MZ Prestige' },
         {
             name: 'description',
-            content: 'Admin dashboard for ReClaim store',
+            content: 'Admin dashboard for MZ Prestige store',
         },
     ];
 }; 

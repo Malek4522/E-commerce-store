@@ -301,7 +301,7 @@ export default function ProductsRoute() {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [
-        { title: `${data?.category.name ?? 'Products'} | ReClaim` },
+        { title: `${data?.category.name ?? 'Products'} | MZ Prestige` },
         {
             name: 'description',
             content: data?.category.description ?? 'Browse our products',

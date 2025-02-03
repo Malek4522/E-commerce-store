@@ -19,7 +19,7 @@ export default function DeliveryInformationPage() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: 'Delivery Information | ReClaim' },
+        { title: 'Delivery Information | MZ Prestige' },
         {
             name: 'description',
             content: 'Essential home products for sustainable living',

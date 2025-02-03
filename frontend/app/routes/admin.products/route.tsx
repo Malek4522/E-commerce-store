@@ -892,10 +892,10 @@ export default function AdminProducts() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: 'Products Management - ReClaim Admin' },
+        { title: 'Products Management - MZ Prestige Admin' },
         {
             name: 'description',
-            content: 'Manage products in ReClaim store',
+            content: 'Manage products in MZ Prestige store',
         },
     ];
 }; 

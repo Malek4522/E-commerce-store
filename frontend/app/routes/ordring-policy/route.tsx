@@ -33,7 +33,7 @@ export default function OrderingPolicyPage() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: 'Ordring Policy | ReClaim' },
+        { title: 'Ordring Policy | MZ Prestige' },
         {
             name: 'description',
             content: 'Essential home products for sustainable living',
