@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CartItem as ICartItem } from '~/src/api/types';
 import { QuantityInput } from '~/src/components/quantity-input/quantity-input';
-import { TrashIcon, ImagePlaceholderIcon, ErrorIcon } from '~/src/components/icons';
-import { Spinner } from '~/src/components/spinner/spinner';
+import { TrashIcon, ImagePlaceholderIcon } from '~/src/components/icons';
 import { ProductPrice } from '~/src/components/product-price/product-price';
+import { ProductLink } from '~/src/components/product-link/product-link';
 import classNames from 'classnames';
 import debounce from 'lodash.debounce';
 import { CartItemOptions } from '../cart-item-options/cart-item-options';
@@ -46,27 +46,27 @@ export const CartItem = ({
     return (
         <div className={classNames(styles.root, { [styles.loading]: isUpdating })}>
             <div className={styles.itemContent}>
-                {item.image ? (
-                    <div className={styles.imageWrapper}>
+                <ProductLink productSlug={item.productSlug} className={styles.imageWrapper}>
+                    {item.image ? (
                         <img src={item.image.url} alt={item.image.altText ?? item.productName} />
-                    </div>
-                ) : (
-                    <div className={styles.imagePlaceholder}>
-                        <ImagePlaceholderIcon className={styles.imagePlaceholderIcon} />
-                    </div>
-                )}
+                    ) : (
+                        <div className={styles.imagePlaceholder}>
+                            <ImagePlaceholderIcon className={styles.imagePlaceholderIcon} />
+                        </div>
+                    )}
+                </ProductLink>
 
                 <div className={styles.productInfo}>
                     <div className={styles.productNameAndPrice}>
-                        <div className={styles.productName}>{item.productName}</div>
-
+                        <ProductLink productSlug={item.productSlug} className={styles.productName}>
+                            {item.productName}
+                        </ProductLink>
                         {item.fullPrice && (
                             <ProductPrice
                                 price={item.fullPrice.formattedAmount}
                                 discountedPrice={item.price.formattedAmount}
                             />
                         )}
-
                         {item.options && item.options.length > 0 && (
                             <CartItemOptions
                                 className={styles.options}
@@ -86,12 +86,15 @@ export const CartItem = ({
                             disabled={!item.isAvailable}
                         />
                     </div>
+
                     <div className={styles.priceBreakdown}>
                         {item.price.formattedAmount}
                     </div>
+
                     <button
-                        className={classNames(styles.removeButton, 'iconButton')}
+                        className={styles.removeButton}
                         onClick={onRemove}
+                        aria-label="Remove item"
                     >
                         <TrashIcon />
                     </button>
@@ -100,14 +103,7 @@ export const CartItem = ({
 
             {!item.isAvailable && (
                 <div className={styles.unavailableIndication}>
-                    <ErrorIcon className={styles.unavailableIcon} />
                     <span>Sorry, this item is no longer available.</span>
-                </div>
-            )}
-
-            {isUpdating && (
-                <div className={styles.spinner}>
-                    <Spinner size={50} />
                 </div>
             )}
         </div>

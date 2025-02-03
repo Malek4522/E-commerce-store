@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from '@remix-run/react';
+import { useNavigate, useLocation } from '@remix-run/react';
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -22,8 +22,16 @@ const AUTH_CHECK_DEBOUNCE = 2000; // 2 seconds debounce
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isAdminRoute = location.pathname.startsWith('/admin');
 
     const checkAuth = useCallback(async () => {
+        // Only check auth for admin routes
+        if (!isAdminRoute) {
+            return true;
+        }
+
         const now = Date.now();
         
         // Return cached result if it's recent enough
@@ -50,12 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             return isAuthenticated;
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, isAdminRoute]);
 
-    // Check authentication status on mount only
+    // Check authentication status on mount and when route changes
     useEffect(() => {
-        checkAuth();
-    }, [checkAuth]);
+        if (isAdminRoute) {
+            checkAuth();
+        }
+    }, [checkAuth, isAdminRoute]);
 
     const login = async (password: string) => {
         try {

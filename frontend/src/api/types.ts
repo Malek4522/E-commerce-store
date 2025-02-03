@@ -9,19 +9,24 @@ export interface Product {
     price: {
         amount: number;
         formatted: string;
-        discountedAmount?: number;
-        discountedFormatted?: string;
+        soldPrice?: number;
+        soldPriceFormatted?: string;
     };
     images: ProductImage[];
+    links?: ProductLink[];
     categoryId: string;
     ribbon?: string;
     stock: number;
+    isNew: boolean;
     inventoryStatus?: InventoryStatus;
     options?: ProductOption[];
     additionalInfo?: {
         title: string;
         content: string;
     }[];
+    variants: ProductVariant[];
+    colors: string[];
+    sizes: string[];
 }
 
 export interface ProductImage {
@@ -30,12 +35,16 @@ export interface ProductImage {
     altText?: string;
 }
 
+export interface ProductLink {
+    url: string;
+    type: 'video' | 'image';
+    id?: string;
+}
+
 export interface ProductVariant {
-    id: string;
-    title: string;
-    price: number;
-    stock: number;
-    options: Record<string, string>;
+    size: string;
+    color: string;
+    quantity: number;
 }
 
 export enum OptionType {

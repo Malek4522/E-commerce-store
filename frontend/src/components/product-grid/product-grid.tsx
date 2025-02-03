@@ -52,7 +52,19 @@ export function ProductGrid({
         <div className={classNames(styles.root, className)}>
             <div className={styles.grid}>
                 {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        name={product.name}
+                        price={product.price.formatted}
+                        soldPrice={product.price.soldPriceFormatted}
+                        isNew={product.isNew}
+                        categoryId={product.categoryId}
+                        imageUrl={product.images[0]?.url}
+                        imageAlt={product.images[0]?.altText}
+                        ribbon={product.ribbon}
+                        inventoryStatus={product.inventoryStatus}
+                    />
                 ))}
             </div>
         </div>

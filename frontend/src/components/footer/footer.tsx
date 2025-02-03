@@ -73,6 +73,11 @@ export const Footer = ({ className }: FooterProps) => {
                         </NavLink>
                     </li>
                     <li>
+                        <NavLink to="/delivery-information" className={navItemStyle}>
+                            Delivery Information
+                        </NavLink>
+                    </li>
+                    <li>
                         <NavLink to="/refund-policy" className={navItemStyle}></NavLink>
                     </li>
                 </ul>

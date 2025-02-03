@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 // @access  Private/Admin
 const createProduct = async (req, res) => {
     try {
-        const { name, description, type, price, variants, links } = req.body;
+        const { name, description, type, price, variants, links, isNew, soldPrice } = req.body;
 
         // Validate required fields
         if (!name || !type || !price) {
@@ -50,7 +50,9 @@ const createProduct = async (req, res) => {
             type,
             price,
             variants: variants || [],
-            links: links || []
+            links: links || [],
+            isNew,
+            soldPrice
         });
 
         res.status(201).json({
@@ -99,7 +101,7 @@ const deleteProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, type, price, variants, links } = req.body;
+        const { name, description, type, price, variants, links, isNew, soldPrice } = req.body;
         
         const product = await Product.findById(id);
 
@@ -112,7 +114,7 @@ const updateProduct = async (req, res) => {
 
         // Update fields if they exist in request body
         if (name) product.name = name;
-        if (description) product.description = description;
+        if (description !== undefined) product.description = description;
         if (type) {
             // Validate product type
             const validTypes = ['Jumpsuit', 'Robe', 'Jupe'];
@@ -148,6 +150,18 @@ const updateProduct = async (req, res) => {
         }
         if (links) {
             product.links = links;
+        }
+        if (isNew !== undefined) {
+            product.isNew = isNew;
+        }
+        if (soldPrice !== undefined) {
+            if (soldPrice < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Sold price cannot be negative'
+                });
+            }
+            product.soldPrice = soldPrice;
         }
         
         await product.save();
@@ -208,6 +222,50 @@ const setProductNew = async (req, res) => {
     }
 }
 
+// @desc    Get all products marked as new
+// @route   GET /api/products/new
+// @access  Public
+const getNewProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ isNew: true });
+        res.status(200).json({
+            success: true,
+            data: products
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get all products with discounted prices
+// @route   GET /api/products/sale
+// @access  Public 
+const getSaleProducts = async (req, res) => {
+    try {
+        const products = await Product.find({
+            $and: [
+                { soldPrice: { $gt: 0 } },
+                { $expr: { $lt: ["$soldPrice", "$price"] } }
+            ]
+        });
+        res.status(200).json({
+            success: true,
+            data: products
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+
 // @desc    Get a single product by ID
 // @route   GET /api/products/admin/:id
 // @access  Private/Admin
@@ -235,11 +293,15 @@ const getProduct = async (req, res) => {
     }
 };
 
+
+
 module.exports = {
     createProduct,
     deleteProduct,
     updateProduct,
     getProducts,
     setProductNew,
-    getProduct
+    getProduct,
+    getNewProducts,
+    getSaleProducts
 };

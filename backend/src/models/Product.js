@@ -41,15 +41,14 @@ const productSchema = new mongoose.Schema({
         min: [0, 'Price cannot be negative']
     },
     variants: [variantSchema],
-    soldPercentage: {
+    soldPrice: {
         type: Number,
         default: 0,
-        min: 0,
-        max: 100
+        min: 0
     },
     isNew: {
         type: Boolean,
-        default: false
+        default: true
     },
     links: [{
         url: {

@@ -31,6 +31,10 @@
 }
 
 .cartItems {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 2rem 0;
     overflow: auto;
 }
 
@@ -69,4 +73,12 @@
     justify-content: center;
     gap: 8px;
     font: var(--paragraph3);
+}
+
+@media (max-width: 768px) {
+    .cartItems {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+        padding: 1rem 0;
+    }
 }

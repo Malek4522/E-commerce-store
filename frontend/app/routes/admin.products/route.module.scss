@@ -1356,4 +1356,29 @@
     min-height: 200px;
     font-size: 1.2rem;
     color: #666;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 8px;
+
+    &.new {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+
+    &.sale {
+        background-color: #fce4ec;
+        color: #c2185b;
+    }
+}
+
+.soldPrice {
+    color: #c2185b;
+    font-size: 0.9rem;
+    text-decoration: line-through;
+    margin-top: 4px;
 } 

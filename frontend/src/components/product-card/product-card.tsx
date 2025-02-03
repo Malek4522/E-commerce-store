@@ -5,33 +5,42 @@ import { ImagePlaceholderIcon } from '../icons';
 import styles from './product-card.module.scss';
 
 export interface ProductCardProps {
+    id: string;
     name: string;
-    slug: string;
     imageUrl?: string;
     imageAlt?: string;
     price: string;
-    discountedPrice?: string;
+    soldPrice?: string;
     ribbon?: string;
+    isNew?: boolean;
+    categoryId?: string;
     inventoryStatus?: InventoryStatus;
     className?: string;
 }
 
 export function ProductCard({
+    id,
     name,
-    slug,
     imageUrl,
     imageAlt,
     price,
-    discountedPrice,
+    soldPrice,
     ribbon,
+    isNew,
+    categoryId,
     inventoryStatus,
     className
 }: ProductCardProps) {
-    const hasDiscount = discountedPrice !== undefined;
+    const hasDiscount = (soldPrice !== undefined && 
+        soldPrice !== price && 
+        parseFloat(soldPrice || '0') > 0) || 
+        categoryId === 'sold';
+
+    const isNewProduct = isNew || categoryId === 'new-in';
 
     return (
         <Link
-            to={`/product-details/${slug}`}
+            to={`/product-details/${id}`}
             className={classNames(styles.root, className)}
             prefetch="intent"
         >
@@ -47,9 +56,13 @@ export function ProductCard({
                         <ImagePlaceholderIcon />
                     </div>
                 )}
-                {ribbon && (
+                {isNewProduct ? (
+                    <div className={styles.ribbon}>NEW</div>
+                ) : hasDiscount ? (
+                    <div className={styles.ribbon}>SALE</div>
+                ) : ribbon ? (
                     <div className={styles.ribbon}>{ribbon}</div>
-                )}
+                ) : null}
                 {inventoryStatus === 'OUT_OF_STOCK' && (
                     <div className={styles.outOfStock}>Out of Stock</div>
                 )}
@@ -61,14 +74,14 @@ export function ProductCard({
                     {hasDiscount ? (
                         <>
                             <span className={styles.discountedPrice}>
-                                {discountedPrice}
+                                {soldPrice}
                             </span>
                             <span className={styles.originalPrice}>
                                 {price}
                             </span>
                         </>
                     ) : (
-                        <span>{price}</span>
+                        <span className={styles.regularPrice}>{price}</span>
                     )}
                 </div>
             </div>

@@ -1,0 +1,30 @@
+.root {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.errorContainer {
+    max-width: 600px;
+    margin: 4rem auto;
+    text-align: center;
+    padding: 2rem;
+
+    h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+
+    p {
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+}
+
+@media (max-width: 768px) {
+    .root {
+        padding: 1rem;
+    }
+} 

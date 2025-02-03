@@ -3,6 +3,7 @@ import { ProductCard, ProductCardSkeleton } from '~/src/components/product-card/
 import { FadeIn, Reveal } from '~/src/components/visual-effects';
 import { useCategory } from '~/src/api/categories';
 import { useProducts } from '~/src/api/products';
+import { Link } from '@remix-run/react';
 import styles from './featured-products-section.module.scss';
 
 interface FeaturedProductsSectionProps {
@@ -16,25 +17,30 @@ interface FeaturedProductsSectionProps {
 export const FeaturedProductsSection = (props: FeaturedProductsSectionProps) => {
     const { title, description, productCount = 4, categorySlug, className } = props;
     const { data: category } = useCategory(categorySlug);
-    const { data: products, isLoading } = useProducts({ categorySlug, limit: productCount });
+    const { data: products, isLoading } = useProducts({ categorySlug });
+
+    const hasMoreProducts = products && products.length > productCount;
+    const displayProducts = products ? products.slice(0, productCount) : [];
 
     return (
         <div className={classNames(styles.root, className)}>
             <FadeIn className={styles.header} duration={1.8}>
-                <h3 className={styles.headerTitle}>{title ?? category?.name ?? categorySlug}</h3>
-                {description && <p className={styles.headerDescription}>{description}</p>}
+                <div className={styles.headerLeft}>
+                    <h3 className={styles.headerTitle}>{title ?? category?.name ?? categorySlug}</h3>
+                    {description && <p className={styles.headerDescription}>{description}</p>}
+                </div>
             </FadeIn>
             <Reveal className={styles.products} direction="down" duration={1.4}>
-                {!isLoading && products
-                    ? products.map((product) => (
+                {!isLoading && displayProducts
+                    ? displayProducts.map((product) => (
                           <ProductCard
                               key={product.id}
+                              id={product.id}
                               name={product.name}
-                              slug={product.slug}
                               imageUrl={product.images[0]?.url}
                               imageAlt={product.images[0]?.altText}
                               price={product.price.formatted}
-                              discountedPrice={product.price.discountedFormatted}
+                              soldPrice={product.price.soldPriceFormatted}
                               ribbon={product.ribbon}
                               inventoryStatus={product.inventoryStatus}
                           />
@@ -43,6 +49,18 @@ export const FeaturedProductsSection = (props: FeaturedProductsSectionProps) => 
                           <ProductCardSkeleton key={i} />
                       ))}
             </Reveal>
+            {hasMoreProducts && (
+                <Link 
+                    to={`/products/${categorySlug}`} 
+                    className={classNames(
+                        styles.seeAllLink,
+                        { [styles.seeAllLinkSale]: categorySlug === 'sold' }
+                    )}
+                >
+                    Explore All
+                    <span className={styles.seeAllArrow}>→</span>
+                </Link>
+            )}
         </div>
     );
 };

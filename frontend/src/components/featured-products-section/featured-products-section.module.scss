@@ -1,27 +1,103 @@
+@use "sass:color";
+
 .root {
     margin: 0 calc(-1 * var(--pagePaddingHoriz));
     padding: 75px var(--pagePaddingHoriz);
 }
 
 .header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 20px;
     width: 100%;
     margin-bottom: 75px;
+    text-align: center;
+}
+
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
 }
 
 .headerTitle {
     font: var(--heading3);
     font-size: 3vw;
+    margin: 0;
+    text-align: center;
 }
 
 .headerDescription {
-    width: 83%;
+    width: 100%;
+    max-width: 600px;
     font: var(--paragraph1);
     font-size: 20px;
     text-wrap: balance;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.seeAllLink {
+    font: var(--paragraph2);
+    font-size: 18px;
+    color: var(--primary1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 24px;
+    margin-top: 48px;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--primary1);
+        opacity: 0.1;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    &:hover {
+        color: var(--primary2);
+        
+        &::before {
+            transform: translateX(0);
+        }
+
+        .seeAllArrow {
+            transform: translateX(6px);
+        }
+    }
+}
+
+.seeAllLinkSale {
+    color: #B8AE97;
+
+    &::before {
+        background-color: #B8AE97;
+    }
+
+    &:hover {
+        color: color.adjust(#B8AE97, $lightness: -10%);
+    }
+}
+
+.seeAllArrow {
+    transition: transform 0.3s ease;
+    font-size: 20px;
 }
 
 .products {
@@ -36,6 +112,14 @@
     .headerDescription {
         font-size: 16px;
     }
+
+    .headerTitle {
+        font-size: 28px;
+    }
+
+    .seeAllLink {
+        font-size: 16px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -45,18 +129,24 @@
     }
 
     .header {
-        display: block;
-        font-size: 30px;
+        flex-direction: column;
+        gap: 16px;
         margin-bottom: 40px;
     }
 
     .headerTitle {
-        font-size: 30px;
-        margin-bottom: 16px;
+        font-size: 24px;
     }
 
     .headerDescription {
         font-size: 14px;
+        width: 100%;
+    }
+
+    .seeAllLink {
+        font-size: 14px;
+        padding: 8px 20px;
+        margin-top: 32px;
     }
 
     .products {

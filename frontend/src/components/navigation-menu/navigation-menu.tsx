@@ -18,23 +18,23 @@ export const NavigationMenu = ({ className, vertical = false }: NavigationMenuPr
         <nav className={className}>
             <ul className={classNames(styles.menuList, { [styles.vertical]: vertical })}>
                 <li>
-                    <CategoryLink categorySlug="all-products" className={menuItemStyle}>
+                    <CategoryLink categorySlug="all" className={menuItemStyle}>
                         Shop All
                     </CategoryLink>
                 </li>
                 <li>
-                    <CategoryLink categorySlug="kitchen-essentials" className={menuItemStyle}>
-                        Kitchen
+                    <CategoryLink categorySlug="rope" className={menuItemStyle}>
+                        Robe
                     </CategoryLink>
                 </li>
                 <li>
-                    <CategoryLink categorySlug="bath" className={menuItemStyle}>
-                        Bath
+                    <CategoryLink categorySlug="jumpsuit" className={menuItemStyle}>
+                        Jumpsuit
                     </CategoryLink>
                 </li>
                 <li>
-                    <CategoryLink categorySlug="on-the-go" className={menuItemStyle}>
-                        On the Go
+                    <CategoryLink categorySlug="jupe" className={menuItemStyle}>
+                        Jupe
                     </CategoryLink>
                 </li>
                 <li>

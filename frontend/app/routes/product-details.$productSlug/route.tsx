@@ -1,98 +1,62 @@
-import { LoaderFunctionArgs, json } from '@remix-run/node';
-import { type MetaFunction, useLoaderData, useNavigation } from '@remix-run/react';
-import { ProductDetails } from '../../../src/components/product-details/product-details';
-import { initializeApiForRequest } from '../../../src/api/session';
-import { BreadcrumbData } from '../../../src/components/breadcrumbs/breadcrumbs';
-import { useBreadcrumbs } from '../../../src/components/breadcrumbs/use-breadcrumbs';
+import { json, LoaderFunctionArgs } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
+import { useProduct } from '~/src/api/products';
+import { ProductDetails } from '~/src/components/product-details/product-details';
+import { ProductDetailsSkeleton } from '~/src/components/product-details/product-details-skeleton';
+import { type MetaFunction } from '@remix-run/react';
+import styles from './styles.module.scss';
 
-let requestCount = 0;
-
-// Server-side code
-export async function loader({ request, params }: LoaderFunctionArgs) {
-    try {
-        // Track request count to detect infinite loops
-        requestCount++;
-        
-        if (requestCount > 5) {
-            throw new Error('Potential infinite loop detected - loader called too many times');
-        }
-
-        const { api } = await initializeApiForRequest(request);
-        const product = await api.getProductBySlug(params.productSlug!);
-
-        if (!product) {
-            throw new Error(`Product not found: ${params.productSlug}`);
-        }
-
-        const url = new URL(request.url);
-        url.search = '';
-
-        return json({ 
-            product,
-            canonicalUrl: url.toString()
-        });
-    } catch (error) {
-        console.error('Error in product details loader:', error);
-        throw error;
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+    if (!params.productSlug) {
+        throw new Response('Not Found', { status: 404 });
     }
-}
-
-interface ProductDetailsLocationState {
-    fromCategory?: {
-        name: string;
-        slug: string;
-    };
-}
-
-// Client-side code
-export const handle = {
-    breadcrumbs: (data: { product?: { name: string; slug: string } }) => {
-        try {
-            if (!data?.product) {
-                return [{
-                    title: 'Product Details',
-                    to: '/product-details'
-                }];
-            }
-            return [{
-                title: data.product.name,
-                to: `/product-details/${data.product.slug}`
-            }];
-        } catch (error) {
-            console.error('Error generating breadcrumbs:', error);
-            return [{
-                title: 'Product Details',
-                to: '/product-details'
-            }];
-        }
-    }
+    return json({ productId: params.productSlug });
 };
 
 export default function ProductDetailsRoute() {
-    const data = useLoaderData<typeof loader>();
-    const breadcrumbs = useBreadcrumbs();
-    const navigation = useNavigation();
-    
-    if (navigation.state === 'loading') {
-        return <div>Loading...</div>;
+    const { productId } = useLoaderData<typeof loader>();
+    const { data: products, isLoading, error } = useProduct(productId);
+    const product = products?.[0];
+
+    if (error) {
+        return (
+            <div className={styles.errorContainer}>
+                <h1>Error</h1>
+                <p>Failed to load product details. Please try again later.</p>
+            </div>
+        );
     }
-    
-    if (!data || !data.product) {
-        throw new Response('Product Not Found', { status: 404 });
+
+    if (isLoading) {
+        return <ProductDetailsSkeleton />;
     }
-    
+
+    if (!product) {
+        return (
+            <div className={styles.errorContainer}>
+                <h1>Product Not Found</h1>
+                <p>The product you're looking for doesn't exist or has been removed.</p>
+            </div>
+        );
+    }
+
     return (
-        <ProductDetails 
-            key={data.product.id}
-            product={data.product}
-            canonicalUrl={data.canonicalUrl}
-            breadcrumbs={breadcrumbs}
-        />
+        <div className={styles.root}>
+            <ProductDetails 
+                product={product}
+                canonicalUrl={`${import.meta.env.VITE_PUBLIC_URL}/product-details/${product.id}`}
+                breadcrumbs={[
+                    { title: 'Home', to: '/' },
+                    { title: 'Products', to: '/products' },
+                    { title: product.name, to: `/product-details/${product.id}` }
+                ]}
+            />
+        </div>
     );
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-    if (!data || !data.product) {
+export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
+    if (!data) {
         return [
             { title: 'Product Not Found | ReClaim' },
             {
@@ -102,31 +66,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
         ];
     }
 
-    const title = `${data.product.name} | ReClaim`;
-    const description = data.product.description;
-
     return [
-        { title },
+        { title: 'Product Details | ReClaim' },
         {
             name: 'description',
-            content: description,
+            content: 'View product details',
         },
         {
             property: 'robots',
             content: 'index, follow',
-        },
-        {
-            property: 'og:title',
-            content: title,
-        },
-        {
-            property: 'og:description',
-            content: description,
-        },
-        {
-            property: 'og:image',
-            content: data.product.images[0]?.url ?? '/social-media-image.jpg',
-        },
+        }
     ];
 };
 

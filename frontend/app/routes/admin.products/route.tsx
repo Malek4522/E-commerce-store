@@ -339,21 +339,21 @@ function EditProductModal({
                         <div className={styles.priceInputGroup}>
                             <input
                                 type="number"
-                                value={editedProduct.salePrice || ''}
+                                value={editedProduct.soldPrice || ''}
                                 onChange={e => {
                                     const value = e.target.value;
                                     setEditedProduct({
                                         ...editedProduct, 
-                                        salePrice: value ? Math.round(parseFloat(value)) : undefined
+                                        soldPrice: value ? Math.round(parseFloat(value)) : 0
                                     });
                                 }}
                                 min="0"
                                 step="1"
                                 placeholder="Optional"
                             />
-                            {editedProduct.salePrice && (
+                            {editedProduct.soldPrice > 0 && (
                                 <div className={styles.discount}>
-                                    {Math.round((1 - editedProduct.salePrice / editedProduct.price) * 100)}% OFF
+                                    {Math.round((1 - editedProduct.soldPrice / editedProduct.price) * 100)}% OFF
                                 </div>
                             )}
                         </div>
@@ -804,16 +804,27 @@ export default function AdminProducts() {
                                             <td data-label="Media">{renderMediaLinks(product.links)}</td>
                                             <td data-label="Name">{product.name}</td>
                                             <td data-label="Type">{product.type}</td>
-                                            <td data-label="Price">{formatPrice(product.price)}</td>
+                                            <td data-label="Price">
+                                                <div>
+                                                    {formatPrice(product.price)}
+                                                    {product.soldPrice > 0 && (
+                                                        <div className={styles.soldPrice}>
+                                                            {formatPrice(product.soldPrice)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td data-label="Stock">{getTotalStock(product.variants)}</td>
                                             <td data-label="Status">
                                                 <div className={styles.badges}>
                                                     {product.isNew && (
                                                         <span className={`${styles.badge} ${styles.new}`}>New</span>
                                                     )}
-                                                    <span className={`${styles.badge} ${styles.stock}`}>
-                                                        {product.soldPercentage}% Sold
-                                                    </span>
+                                                    {product.soldPrice > 0 && (
+                                                        <span className={`${styles.badge} ${styles.sale}`}>
+                                                            Sale
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td data-label="Actions">
@@ -864,7 +875,7 @@ export default function AdminProducts() {
                             type: 'Jumpsuit',
                             price: 0,
                             variants: [],
-                            soldPercentage: 0,
+                            soldPrice: 0,
                             isNew: true,
                             links: [],
                             colors: [],

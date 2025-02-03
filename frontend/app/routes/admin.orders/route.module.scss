@@ -203,18 +203,17 @@
     color: #4b5563;
     white-space: nowrap;
     
-    div {
-        margin-bottom: 0.25rem;
-        
-        &:last-child {
-            margin-bottom: 0;
-        }
+    .originalPrice {
+        font-size: 0.85rem;
+        color: #666;
+        text-decoration: line-through;
+        margin-top: 2px;
     }
 
     .total {
-        font-weight: 600;
+        margin-top: 8px;
+        font-weight: 500;
         color: #1a1a1a;
-        font-size: 0.875rem;
     }
 
     .warning {

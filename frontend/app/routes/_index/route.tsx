@@ -38,15 +38,15 @@ export default function HomePage() {
             </div>
 
             <div className="cardsSection">
-                <CategoryLink categorySlug="kitchen-essentials" className="linkCard">
+                <CategoryLink categorySlug="rope" className="linkCard">
                     <img className="linkCardBackground" src={CJpg} alt="" />
                     <div className="linkCardTitle">Rope</div>
                 </CategoryLink>
-                <CategoryLink categorySlug="bath" className="linkCard">
+                <CategoryLink categorySlug="jumpsuit" className="linkCard">
                     <img className="linkCardBackground" src={DWebp} alt="" />
                     <div className="linkCardTitle">Jump Suit</div>
                 </CategoryLink>
-                <CategoryLink categorySlug="on-the-go" className="linkCard">
+                <CategoryLink categorySlug="jupe" className="linkCard">
                     <img className="linkCardBackground" src={DJpeg} alt="" />
                     <div className="linkCardTitle">jupe</div>
                 </CategoryLink>
@@ -54,25 +54,25 @@ export default function HomePage() {
 
             <BackgroundParallax
                 className="floatingCardBackground"
-                backgroundImageUrl="https://static.wixstatic.com/media/c837a6_cae4dbe5a7ee4637b7d55d9bd5bd755d~mv2.png/v1/fill/w_1178,h_974,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/c837a6_cae4dbe5a7ee4637b7d55d9bd5bd755d~mv2.png"
                 parallaxStrength={0.75}
             >
                 <FloatIn direction="up" duration={1.2} distance={120}>
                     <div className="floatingCard">
                         <div className="floatingCardHeader">Happy Holidays</div>
                         <div className="floatingCardContent">
-                            <h2 className="floatingCardTitle">The holidays best sellers</h2>
+                            <h2 className="floatingCardTitle">The holidays sales</h2>
                             <div className="floatingCardDescription">
-                                Home essentials for
-                                <br /> sustainable living
+                                Special discounts on
+                                <br /> selected items
                             </div>
                         </div>
                         <CategoryLink categorySlug="all-products">
-                            <LabelWithArrow>Buy a gift</LabelWithArrow>
+                            <LabelWithArrow>Shop Sales</LabelWithArrow>
                         </CategoryLink>
                     </div>
                 </FloatIn>
             </BackgroundParallax>
+
             <FeaturedProductsSection
                 className="alternateBackground"
                 categorySlug="new-in"
@@ -82,8 +82,9 @@ export default function HomePage() {
             />
 
             <FeaturedProductsSection
-                categorySlug="best-sellers"
-                title="Best Sellers"
+                categorySlug="sold"
+                title="On Sale"
+                description="Don't miss out on these amazing deals."
                 productCount={4}
             />
         </div>

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Product, InventoryStatus } from './types';
+import type { Product, InventoryStatus } from './types';
+import { mapBackendProductToFrontend } from './product-mapper';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface UseProductsOptions {
     categorySlug?: string;
@@ -18,35 +21,51 @@ export function useProducts({ categorySlug, limit }: UseProductsOptions = {}): U
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockProducts: Product[] = [
-            {
-                id: '1',
-                name: 'Sample Product',
-                slug: 'sample-product',
-                description: 'A sample product description',
-                price: {
-                    amount: 99.99,
-                    formatted: '$99.99',
-                    discountedAmount: 79.99,
-                    discountedFormatted: '$79.99'
-                },
-                images: [
-                    {
-                        id: '1',
-                        url: 'https://i.ibb.co/KxQwXNM9/a.jpg',
-                        altText: 'Sample product image'
-                    }
-                ],
-                categoryId: '1',
-                ribbon: 'New',
-                stock: 10,
-                inventoryStatus: 'IN_STOCK'
-            }
-        ];
+        const abortController = new AbortController();
+        let isMounted = true;
 
-        setData(mockProducts);
-        setIsLoading(false);
+        async function fetchProducts() {
+            try {
+                let url = `${API_URL}/product`;
+                if (categorySlug === 'new-in') {
+                    url = `${API_URL}/product/new`;
+                } else if (categorySlug === 'sold') {
+                    url = `${API_URL}/product/sale`;
+                }
+
+                const response = await fetch(url, {
+                    signal: abortController.signal
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+
+                const { data: products } = await response.json();
+                if (isMounted) {
+                    setData(products.map(mapBackendProductToFrontend));
+                    setError(null);
+                }
+            } catch (err) {
+                if (err instanceof Error && err.name === 'AbortError') {
+                    return;
+                }
+                if (isMounted) {
+                    setError(err instanceof Error ? err : new Error('Failed to fetch products'));
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        }
+
+        fetchProducts();
+
+        return () => {
+            isMounted = false;
+            abortController.abort();
+        };
     }, [categorySlug, limit]);
 
     return { data, isLoading, error };
@@ -58,34 +77,25 @@ export function useProduct(slug: string): UseProductsResult {
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockProduct: Product = {
-            id: '1',
-            name: 'Sample Product',
-            slug: 'sample-product',
-            description: 'A sample product description',
-            price: {
-                amount: 99.99,
-                formatted: '$99.99',
-                discountedAmount: 79.99,
-                discountedFormatted: '$79.99'
-            },
-            images: [
-                {
-                    id: '1',
-                    url: 'https://i.ibb.co/KxQwXNM9/a.jpg',
-                    altText: 'Sample product image'
+        async function fetchProduct() {
+            try {
+                const response = await fetch(`${API_URL}/product/${slug}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch product');
                 }
-            ],
-            categoryId: '1',
-            ribbon: 'New',
-            stock: 10,
-            inventoryStatus: 'IN_STOCK'
-        };
 
-        setData([mockProduct]);
-        setIsLoading(false);
+                const { data: product } = await response.json();
+                setData([mapBackendProductToFrontend(product)]);
+                setError(null);
+            } catch (err) {
+                setError(err instanceof Error ? err : new Error('Failed to fetch product'));
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchProduct();
     }, [slug]);
 
-    return { data: data?.[0] ? [data[0]] : undefined, isLoading, error };
+    return { data, isLoading, error };
 }

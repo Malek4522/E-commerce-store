@@ -127,7 +127,7 @@ export class CustomApiClient implements ApiClient {
     }
 
     async createOrder(items: OrderItem[], customerInfo: CustomerInfo): Promise<Order> {
-        return this.fetch('/orders', {
+        return this.fetch('/orders/', {
             method: 'POST',
             body: JSON.stringify({ items, customerInfo }),
         });

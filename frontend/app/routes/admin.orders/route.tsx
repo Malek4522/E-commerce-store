@@ -3,7 +3,7 @@ import type { MetaFunction } from '@remix-run/react';
 import { Link, useNavigate } from '@remix-run/react';
 import { getOrders, updateOrderStatus, deleteOrder, updateOrder, createOrder } from '../../api/admin/orders';
 import { getProduct, getProducts } from '../../api/admin/products';
-import type { Order, Product } from '../../api/admin/types';
+import type { ProductLink, ProductVariant, Order as BaseOrder, Product } from '../../api/admin/types';
 import { 
     calculateDeliveryPrice, 
     calculateTotalPrice, 
@@ -13,6 +13,24 @@ import {
     getAllWilayas
 } from '../../utils/delivery-prices';
 import styles from './route.module.scss';
+
+type OrderProduct = {
+    _id: string;
+    name: string;
+    price: number;
+    soldPrice?: number;
+    links: ProductLink[];
+    slug: string;
+    variants: ProductVariant[];
+    colors: string[];
+    sizes: string[];
+};
+
+type OrderStatus = 'waiting' | 'delivering' | 'delivered' | 'canceled';
+
+interface Order extends Omit<BaseOrder, 'product'> {
+    product: OrderProduct;
+}
 
 export default function AdminOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -53,6 +71,7 @@ export default function AdminOrders() {
                     _id: product._id,
                     name: product.name,
                     price: Number(product.price), // Ensure price is a number
+                    soldPrice: product.soldPrice,
                     links: product.links || [],
                     slug: product.name.toLowerCase().replace(/ /g, '-'),
                     variants: product.variants,
@@ -208,11 +227,12 @@ export default function AdminOrders() {
         return `${formattedWhole},${decimal} DA`;
     }
 
-    function calculateTotalWithFallback(productPrice: number | undefined | null, state: string, delivery: 'home' | 'center'): number {
-        if (productPrice === undefined || productPrice === null || isNaN(productPrice)) return 0;
+    function calculateTotalWithFallback(productPrice: number | undefined | null, state: string, delivery: 'home' | 'center', soldPrice?: number): number {
+        const basePrice = (soldPrice !== undefined && soldPrice > 0) ? soldPrice : (productPrice ?? 0);
+        if (basePrice === 0) return 0;
         const deliveryPrice = calculateDeliveryPrice(state, delivery);
-        if (deliveryPrice === null) return productPrice;
-        return productPrice + deliveryPrice;
+        if (deliveryPrice === null) return basePrice;
+        return basePrice + deliveryPrice;
     }
 
     function getStatusColor(status: string): string {
@@ -457,14 +477,26 @@ export default function AdminOrders() {
                                                 </div>
                                             </td>
                                             <td className={styles.price}>
-                                                <div>Product: {formatPrice(order.product?.price)}</div>
+                                                <div>
+                                                    Product: {formatPrice(order.product?.soldPrice && order.product.soldPrice > 0 ? order.product.soldPrice : order.product?.price)}
+                                                    {order.product?.soldPrice && order.product.soldPrice > 0 && (
+                                                        <div className={styles.originalPrice}>
+                                                            Original: {formatPrice(order.product.price)}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 {calculateDeliveryPrice(order.state, order.delivery) !== null && (
                                                     <div>
                                                         Delivery: {formatPrice(calculateDeliveryPrice(order.state, order.delivery))}
                                                     </div>
                                                 )}
                                                 <div className={styles.total}>
-                                                    Total: {formatPrice(calculateTotalWithFallback(order.product?.price, order.state, order.delivery))}
+                                                    Total: {formatPrice(calculateTotalWithFallback(
+                                                        order.product?.price,
+                                                        order.state,
+                                                        order.delivery,
+                                                        order.product?.soldPrice
+                                                    ))}
                                                 </div>
                                                 {calculateDeliveryPrice(order.state, order.delivery) === null && (
                                                     <div className={styles.warning}>
@@ -594,8 +626,8 @@ export default function AdminOrders() {
 
                                                         // Find available colors for this size
                                                         const availableColors = product.variants
-                                                            .filter(v => v.size === newSize && v.quantity > 0)
-                                                            .map(v => v.color);
+                                                            .filter((v: ProductVariant) => v.size === newSize && v.quantity > 0)
+                                                            .map((v: ProductVariant) => v.color);
                                                         
                                                         setNewOrder({
                                                             ...newOrder,
@@ -790,10 +822,6 @@ export default function AdminOrders() {
                                         alt={editingProduct.name}
                                         className={styles.productImage}
                                     />
-                                    <div className={styles.productDetails}>
-                                        <span className={styles.productName}>{editingProduct.name}</span>
-                                        <span className={styles.productPrice}>{formatPrice(editingProduct.price)}</span>
-                                    </div>
                                 </div>
                             </div>
 
@@ -809,8 +837,8 @@ export default function AdminOrders() {
                                                 const newSize = e.target.value;
                                                 // Find available colors for this size
                                                 const availableColors = editingProduct.variants
-                                                    .filter(v => v.size === newSize && v.quantity > 0)
-                                                    .map(v => v.color);
+                                                    .filter((v: ProductVariant) => v.size === newSize && v.quantity > 0)
+                                                    .map((v: ProductVariant) => v.color);
                                                 
                                                 setEditingOrder({
                                                     ...editingOrder,
@@ -843,14 +871,14 @@ export default function AdminOrders() {
                                             }}
                                             required
                                         >
-                                            {editingProduct.variants
-                                                .filter(v => v.size === editingOrder.size && v.quantity > 0)
-                                                .map(v => (
-                                                    <option key={v.color} value={v.color}>
-                                                        {v.color} ({v.quantity} in stock)
-                                                    </option>
-                                                ))}
-                                        </select>
+                                                    {editingProduct.variants
+                                                        .filter(v => v.size === editingOrder.size && v.quantity > 0)
+                                                        .map(v => (
+                                                            <option key={v.color} value={v.color}>
+                                                                {v.color} ({v.quantity} in stock)
+                                                            </option>
+                                                        ))}
+                                                </select>
                                     </div>
                                 </div>
                             </div>
@@ -918,7 +946,18 @@ export default function AdminOrders() {
                             <div className={styles.priceSummary}>
                                 <div className={styles.priceRow}>
                                     <span>Product Price:</span>
-                                    <span>{formatPrice(editingOrder.product.price)}</span>
+                                    <span>
+                                        {editingOrder.product.soldPrice && editingOrder.product.soldPrice > 0 ? (
+                                            <>
+                                                {formatPrice(editingOrder.product.soldPrice)}
+                                                <div className={styles.originalPrice}>
+                                                    Original: {formatPrice(editingOrder.product.price)}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            formatPrice(editingOrder.product.price)
+                                        )}
+                                    </span>
                                 </div>
                                 {calculateDeliveryPrice(editingOrder.state, editingOrder.delivery) !== null && (
                                     <div className={styles.priceRow}>
@@ -928,7 +967,12 @@ export default function AdminOrders() {
                                 )}
                                 <div className={`${styles.priceRow} ${styles.total}`}>
                                     <span>Total Price:</span>
-                                    <span>{formatPrice(calculateTotalWithFallback(editingOrder.product.price, editingOrder.state, editingOrder.delivery))}</span>
+                                    <span>{formatPrice(calculateTotalWithFallback(
+                                        editingOrder.product.price,
+                                        editingOrder.state,
+                                        editingOrder.delivery,
+                                        editingOrder.product.soldPrice
+                                    ))}</span>
                                 </div>
                                 {calculateDeliveryPrice(editingOrder.state, editingOrder.delivery) === null && (
                                     <div className={styles.warning}>

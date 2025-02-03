@@ -15,9 +15,8 @@ export interface Product {
     description?: string;
     type: 'Jumpsuit' | 'Robe' | 'Jupe';
     price: number;
-    salePrice?: number;
     variants: ProductVariant[];
-    soldPercentage: number;
+    soldPrice?: number;
     isNew: boolean;
     links: ProductLink[];
     colors: string[];
