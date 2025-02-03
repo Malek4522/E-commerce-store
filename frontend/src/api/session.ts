@@ -3,44 +3,25 @@ import { ApiClient, User, Product } from './types';
 const isDev = import.meta.env.DEV;
 
 // Mock data
-const mockProduct: Product = {
-    id: '1',
-    name: 'Sample Product',
-    slug: 'sample-product',
-    description: 'A sample product description',
-    price: {
-        amount: 99.99,
-        formatted: '$99.99',
-        discountedAmount: 79.99,
-        discountedFormatted: '$79.99'
-    },
-    images: [
-        {
-            id: '1',
-            url: 'https://i.ibb.co/KxQwXNM9/a.jpg',
-            altText: 'Sample product image'
-        }
-    ],
-    categoryId: '1',
-    ribbon: 'New',
-    stock: 10,
-    inventoryStatus: 'IN_STOCK'
-};
+
 
 // Mock API client implementation
 const createApiClient = (token?: string): ApiClient => ({
-    async getProducts({ page = 1, limit = 12, search }) {
+    async getProducts(params?: { page?: number; limit?: number; search?: string; type?: string }) {
+        const page = params?.page ?? 1;
+        const limit = params?.limit ?? 12;
+        const search = params?.search;
         // TODO: Replace with actual API call
         return {
-            items: [mockProduct],
-            total: 1
+            items: [],
+            total: 0
         };
     },
 
     async getProductBySlug(slug: string) {
         // Return mock product for any slug in development
         if (isDev) {
-            return mockProduct;
+            return ;
         }
         return undefined;
     },

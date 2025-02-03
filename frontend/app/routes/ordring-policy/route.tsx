@@ -1,10 +1,11 @@
 import type { MetaFunction } from '@remix-run/react';
+import React from 'react';
 import styles from './route.module.scss';
 
-export default function ShippingPolicyPage() {
+export default function OrderingPolicyPage() {
     return (
         <div className="textPage">
-            <h1>Shipping Policy-سياسات الشحن </h1>
+            <h1>Ordring Policy-سياسات نظام الطلبات </h1>
             <div className={styles.div1}>
                 <p>
                     بعد اختيار المنتج وطلب التوصيل، سنتصل بك على الرقم الذي قدمته لتأكيد الطلب.
@@ -32,7 +33,7 @@ export default function ShippingPolicyPage() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: 'Shipping Policy | ReClaim' },
+        { title: 'Ordring Policy | ReClaim' },
         {
             name: 'description',
             content: 'Essential home products for sustainable living',
@@ -42,4 +43,4 @@ export const meta: MetaFunction = () => {
             content: 'index, follow',
         },
     ];
-};
+}; 

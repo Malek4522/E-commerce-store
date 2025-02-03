@@ -3,7 +3,8 @@ import type { ApiClient } from './types';
 
 // Mock implementation of the API client
 const mockApiClient: ApiClient = {
-    getProducts: async ({ page = 1, limit = 10, search = '' }) => {
+    getProducts: async (params?: { page?: number; limit?: number; search?: string; type?: string }) => {
+        const { page = 1, limit = 10, search = '' } = params || {};
         return {
             items: [],
             total: 0

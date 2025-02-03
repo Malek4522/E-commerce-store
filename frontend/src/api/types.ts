@@ -72,6 +72,7 @@ export interface Category {
     slug: string;
     description?: string;
     image?: string;
+    type?: string;
 }
 
 export interface Image {
@@ -214,11 +215,11 @@ export interface ProductFilters {
 // API Client interface
 export interface ApiClient {
     // Products
-    getProducts(options: {
+    getProducts(options?: {
         page?: number;
         limit?: number;
         search?: string;
-        categories?: string[];
+        type?: string;
     }): Promise<{ items: Product[]; total: number }>;
     
     getProductBySlug(slug: string): Promise<Product | undefined>;

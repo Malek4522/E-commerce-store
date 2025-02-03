@@ -192,6 +192,33 @@ const getProducts = async (req, res) => {
     }
 }
 
+const getRopeProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ type: 'Robe' });
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+}
+
+const getJumpsuitProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ type: 'Jumpsuit' });
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+}
+
+const getJupeProducts = async (req, res) => {
+    try {
+        const products = await Product.find({ type: 'Jupe' });
+        res.status(200).json({ success: true, data: products });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+}
+
 const setProductNew = async (req, res) => {
     try {
         const { id } = req.params;
@@ -303,5 +330,8 @@ module.exports = {
     setProductNew,
     getProduct,
     getNewProducts,
-    getSaleProducts
+    getSaleProducts,
+    getRopeProducts,
+    getJumpsuitProducts,
+    getJupeProducts
 };

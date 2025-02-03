@@ -4,7 +4,7 @@ export class CustomApiClient implements ApiClient {
     private baseUrl: string;
     private token: string | null;
 
-    constructor(baseUrl: string = '/api') {
+    constructor(baseUrl: string = typeof window === 'undefined' ? 'http://localhost:5000/api' : '/api') {
         this.baseUrl = baseUrl;
         this.token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     }
@@ -19,24 +19,30 @@ export class CustomApiClient implements ApiClient {
             headers.set('Authorization', `Bearer ${this.token}`);
         }
 
-        const response = await fetch(`${this.baseUrl}${path}`, {
-            ...options,
-            headers,
-        });
+        try {
+            const response = await fetch(`${this.baseUrl}${path}`, {
+                ...options,
+                headers,
+            });
 
-        if (response.status === 401) {
-            this.token = null;
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('auth_token');
+            if (response.status === 401) {
+                this.token = null;
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('auth_token');
+                }
+                throw new Error('Unauthorized');
             }
-            throw new Error('Unauthorized');
-        }
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
 
-        return response.json();
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            throw error;
+        }
     }
 
     setToken(token: string | null) {
@@ -55,18 +61,21 @@ export class CustomApiClient implements ApiClient {
         page?: number;
         limit?: number;
         search?: string;
-    }): Promise<{ items: Product[]; total: number }> {
+        type?: string;
+    } = {}): Promise<{ items: Product[]; total: number }> {
         const params = new URLSearchParams();
         if (options.page) params.append('page', options.page.toString());
         if (options.limit) params.append('limit', options.limit.toString());
         if (options.search) params.append('search', options.search);
+        if (options.type) params.append('type', options.type);
 
-        return this.fetch(`/products?${params.toString()}`);
+        const queryString = params.toString();
+        return this.fetch(`/product${queryString ? `?${queryString}` : ''}`);
     }
 
     async getProductBySlug(slug: string): Promise<Product | undefined> {
         try {
-            return await this.fetch(`/products/${slug}`);
+            return await this.fetch(`/product/${slug}`);
         } catch (error) {
             if ((error as any).status === 404) return undefined;
             throw error;

@@ -37,45 +37,76 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     }
 
     const { api } = await initializeApiForRequest(request);
-    const category = await api.getCategoryBySlug(categorySlug);
+    let category;
+    let products;
+    let categories;
 
+    // Define available categories based on product types (matching backend enum)
+    categories = [
+        { id: 'all-products', name: 'All Products', slug: 'all-products', description: 'Browse all our products' },
+        { id: 'jumpsuit', name: 'Jumpsuit', slug: 'jumpsuit', description: 'Browse our jumpsuit collection', type: 'Jumpsuit' },
+        { id: 'rope', name: 'Rope', slug: 'rope', description: 'Browse our rope collection', type: 'Rope' },
+        { id: 'jupe', name: 'Jupe', slug: 'jupe', description: 'Browse our jupe collection', type: 'Jupe' },
+        { id: 'new', name: 'New', slug: 'new', description: 'Browse our new arrivals' },
+        { id: 'sale', name: 'Sale', slug: 'sale', description: 'Browse our sale items' }
+    ];
+
+    // Find the selected category
+    category = categories.find(cat => cat.slug === categorySlug);
     if (!category) {
         throw new Response('Category Not Found', { status: 404 });
     }
 
-    const searchParams = new URLSearchParams(url.search);
-    const filters: ProductFilters = {
-        categories: [category.id],
-        search: searchParams.get('search') || undefined,
-        price: {
-            min: Number(searchParams.get('minPrice')) || 0,
-            max: Number(searchParams.get('maxPrice')) || Infinity
+    try {
+        // Get products based on category
+        const response = await api.getProducts(
+            category.slug === 'all-products' 
+                ? {} 
+                : { type: category.type }
+        ).catch(error => {
+            throw error;
+        });
+
+        if (!response || !response.items) {
+            throw new Error('Invalid API response');
         }
-    };
 
-    const sortBy = (searchParams.get('sortBy') as ProductSortBy) || ProductSortBy.NAME_ASC;
-    const page = Number(searchParams.get('page')) || 1;
-    const limit = 12;
+        products = response.items;
 
-    const [productsResponse, categories] = await Promise.all([
-        api.getProducts({ page, limit, ...filters }),
-        api.getCategories()
-    ]);
+        if (!Array.isArray(products)) {
+            throw new Error('Invalid products data');
+        }
 
-    // Calculate price range from available products
-    const prices = productsResponse.items.map(product => product.price.amount);
-    const priceRange = {
-        min: Math.min(...prices),
-        max: Math.max(...prices)
-    };
+        // Calculate price range from available products
+        const prices = products.map(product => 
+            typeof product.price === 'object' && product.price.amount 
+                ? product.price.amount 
+                : typeof product.price === 'number' 
+                    ? product.price 
+                    : 0
+        ).filter(price => typeof price === 'number' && !isNaN(price));
 
-    return json<LoaderData>({
-        category,
-        products: productsResponse.items,
-        totalProducts: productsResponse.total,
-        categories,
-        priceRange
-    });
+        const priceRange = {
+            min: prices.length ? Math.min(...prices) : 0,
+            max: prices.length ? Math.max(...prices) : 0
+        };
+
+        return json<LoaderData>({
+            category,
+            products,
+            totalProducts: response.total,
+            categories,
+            priceRange
+        });
+    } catch (error) {
+        throw new Response(
+            error instanceof Error ? error.message : 'Failed to load products',
+            { 
+                status: 500,
+                statusText: error instanceof Error ? error.message : 'Internal Server Error'
+            }
+        );
+    }
 }
 
 const breadcrumbs: RouteBreadcrumbs<typeof loader> = (match) => [
@@ -106,6 +137,68 @@ export default function ProductsRoute() {
     const { sorting } = useSorting();
 
     const breadcrumbs = useBreadcrumbs();
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                let url = `${import.meta.env.VITE_API_URL}/product`;
+                if (category.slug === 'new-in') {
+                    url = `${import.meta.env.VITE_API_URL}/product/new`;
+                } else if (category.slug === 'sold') {
+                    url = `${import.meta.env.VITE_API_URL}/product/sale`;
+                } else {
+                    url = `${import.meta.env.VITE_API_URL}/product/${category.slug}`;
+                }
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+
+                const { data } = await response.json();
+                
+                // Transform the data to match frontend expectations
+                const transformedProducts = data.map((product: {
+                    _id: string;
+                    name: string;
+                    price: number;
+                    soldPrice: number;
+                    links: Array<{
+                        id: string;
+                        url: string;
+                        type: 'image' | 'video';
+                    }>;
+                }) => ({
+                    ...product,
+                    images: product.links
+                        .filter(link => link.type === 'image')
+                        .map(link => ({
+                            id: link.id,
+                            url: link.url,
+                            altText: product.name
+                        })),
+                    price: {
+                        amount: product.price,
+                        formatted: `${product.price.toLocaleString()} DA`,
+                        soldPrice: product.soldPrice,
+                        soldPriceFormatted: product.soldPrice ? `${product.soldPrice.toLocaleString()} DA` : undefined
+                    }
+                }));
+
+                setProducts(transformedProducts);
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : 'Failed to fetch products');
+            }
+        };
+        
+        fetchProducts();
+    }, [category.slug]);
 
     const loadMoreProducts = async () => {
         try {

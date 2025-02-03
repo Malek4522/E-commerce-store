@@ -65,7 +65,6 @@ export default function AdminOrders() {
             const firstAvailableVariant = product.variants.find(v => v.quantity > 0);
             if (!firstAvailableVariant) return;
 
-            console.log('Selected product:', product);
             const newOrderData: Omit<Order, '_id' | 'createdAt' | 'updatedAt'> = {
                 product: {
                     _id: product._id,
@@ -87,7 +86,6 @@ export default function AdminOrders() {
                 delivery: 'home' as const,
                 status: 'waiting'
             };
-            console.log('New order data:', newOrderData);
             setNewOrder(newOrderData);
         } else {
             setNewOrder(null);
@@ -96,7 +94,6 @@ export default function AdminOrders() {
 
     // Helper function to ensure product price is a number
     function ensureOrderPrice(order: Order): Order {
-        console.log('Before price conversion:', order.product.price, typeof order.product.price);
         const result = {
             ...order,
             product: {
@@ -104,21 +101,17 @@ export default function AdminOrders() {
                 price: Number(order.product.price)
             }
         };
-        console.log('After price conversion:', result.product.price, typeof result.product.price);
         return result;
     }
 
     async function loadOrders() {
         try {
             const data = await getOrders();
-            console.log('Raw orders data:', data);
             // Ensure product data is properly populated
             const ordersWithProducts = data.map(order => ensureOrderPrice(order));
-            console.log('Processed orders:', ordersWithProducts);
             setOrders(ordersWithProducts);
             setError(null);
         } catch (err) {
-            console.error('Load orders error:', err);
             if (err instanceof Error && err.message === 'No authentication token found') {
                 navigate('/admin/login');
             } else {
@@ -205,17 +198,13 @@ export default function AdminOrders() {
 
         try {
             setError(null);
-            console.log('New order before creation:', newOrder);
             const createdOrder = await createOrder(newOrder);
-            console.log('Created order response:', createdOrder);
             const processedOrder = ensureOrderPrice(createdOrder);
-            console.log('Processed new order:', processedOrder);
             setOrders([processedOrder, ...orders]);
             setIsAddingOrder(false);
             setSelectedProductId('');
             setNewOrder(null);
         } catch (err) {
-            console.error('Add order error:', err);
             setError(err instanceof Error ? err.message : 'Failed to create order');
         }
     }
@@ -441,13 +430,11 @@ export default function AdminOrders() {
                                                                 if (order.delivery === type) return;
                                                                 
                                                                 try {
-                                                                    console.log('Before update - Order:', order);
                                                                     // Only send necessary fields for update
                                                                     const updatedOrder = await updateOrder(order._id, {
                                                                         delivery: type,
                                                                         state: order.state
                                                                     });
-                                                                    console.log('After update - Raw response:', updatedOrder);
                                                                     // Merge the response with existing order data
                                                                     const mergedOrder = {
                                                                         ...order,
@@ -455,12 +442,10 @@ export default function AdminOrders() {
                                                                         updatedAt: updatedOrder.updatedAt
                                                                     };
                                                                     const processedOrder = ensureOrderPrice(mergedOrder);
-                                                                    console.log('After update - Processed order:', processedOrder);
                                                                     setOrders(orders.map(o => 
                                                                         o._id === processedOrder._id ? processedOrder : o
                                                                     ));
                                                                 } catch (err) {
-                                                                    console.error('Update delivery error:', err);
                                                                     setError('Failed to update delivery type');
                                                                 }
                                                             }}

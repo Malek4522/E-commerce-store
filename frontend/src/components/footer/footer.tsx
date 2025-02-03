@@ -22,35 +22,32 @@ export const Footer = ({ className }: FooterProps) => {
                     <ul className={styles.navList}>
                         <li>
                             <CategoryLink categorySlug="all-products" className={navItemStyle}>
-                                Shop All
+                                All Products
                             </CategoryLink>
                         </li>
                         <li>
-                            <CategoryLink
-                                categorySlug="kitchen-essentials"
-                                className={navItemStyle}
-                            >
-                                Rope
+                            <CategoryLink categorySlug="jumpsuit" className={navItemStyle}>
+                                Jumpsuit
                             </CategoryLink>
                         </li>
                         <li>
-                            <CategoryLink categorySlug="bath" className={navItemStyle}>
-                                JumpSuit
+                            <CategoryLink categorySlug="robe" className={navItemStyle}>
+                                Robe
                             </CategoryLink>
                         </li>
                         <li>
-                            <CategoryLink categorySlug="on-the-go" className={navItemStyle}>
+                            <CategoryLink categorySlug="jupe" className={navItemStyle}>
                                 Jupe
                             </CategoryLink>
                         </li>
                         <li>
-                            <CategoryLink categorySlug="new-in" className={navItemStyle}>
-                                Les derniers vêtements
+                            <CategoryLink categorySlug="new" className={navItemStyle}>
+                                New
                             </CategoryLink>
                         </li>
                         <li>
-                            <CategoryLink categorySlug="best-sellers" className={navItemStyle}>
-                                sold
+                            <CategoryLink categorySlug="sale" className={navItemStyle}>
+                                Sale
                             </CategoryLink>
                         </li>
                         <li>
@@ -61,15 +58,11 @@ export const Footer = ({ className }: FooterProps) => {
                     </ul>
                 </nav>
                 <ul className={styles.navList}>
+                    
+                    
                     <li>
-                        <NavLink to="/terms-and-conditions" className={navItemStyle}></NavLink>
-                    </li>
-                    <li>
-                        <NavLink to="/privacy-policy" className={navItemStyle}></NavLink>
-                    </li>
-                    <li>
-                        <NavLink to="/shipping-policy" className={navItemStyle}>
-                            Shipping Policy
+                        <NavLink to="/Ordring-policy" className={navItemStyle}>
+                            Ordring Policy
                         </NavLink>
                     </li>
                     <li>
@@ -78,7 +71,9 @@ export const Footer = ({ className }: FooterProps) => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/refund-policy" className={navItemStyle}></NavLink>
+                        <NavLink to="/refund-policy" className={navItemStyle}>
+                            Refund Policy
+                        </NavLink>
                     </li>
                 </ul>
                 <ul className={styles.navList}>
@@ -106,17 +101,17 @@ export const Footer = ({ className }: FooterProps) => {
                             className={styles.navItem}
                             target="_blank"
                         >
-                            Tiktok
+                            TikTok
                         </Link>
-
+                    </li>
+                    <li>
                         <Link
-                            to="0666104876"
+                            to="https://wa.me/0666104876"
                             className={styles.navItem}
                             target="_blank"
                         >
-                            Whatsup
+                            WhatsApp
                         </Link>
-
                     </li>
                 </ul>
             </FadeIn>
@@ -125,10 +120,7 @@ export const Footer = ({ className }: FooterProps) => {
                     ReClaim
                 </Link>
                 <div className={styles.copyright}>
-                    <span>© 2035 by ReClaim. Made with </span>
-                    <Link to="https://www.codux.com/" className={styles.coduxLink}>
-                        Codux™
-                    </Link>
+                    <span>© {new Date().getFullYear()} ReClaim. All rights reserved.</span>
                 </div>
             </FadeIn>
         </footer>

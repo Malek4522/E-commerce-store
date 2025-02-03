@@ -45,7 +45,7 @@ export function Layout({ children }: React.PropsWithChildren) {
                 <Links />
             </head>
             <body>
-                <ApiProvider baseUrl="/api">
+                <ApiProvider>
                     <CartProvider>
                         <AuthProvider>
                             <div>
@@ -80,7 +80,7 @@ export default function App() {
                 <Links />
             </head>
             <body>
-                <ApiProvider baseUrl="/api">
+                <ApiProvider >
                     <CartProvider>
                         <AuthProvider>
                             <div>

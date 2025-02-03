@@ -37,7 +37,7 @@ export default function HomePage() {
                 </FadeIn>
             </div>
 
-            <div className="cardsSection">
+            <div className={styles.cardsSection}>
                 <CategoryLink categorySlug="rope" className="linkCard">
                     <img className="linkCardBackground" src={CJpg} alt="" />
                     <div className="linkCardTitle">Rope</div>
