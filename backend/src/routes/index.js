@@ -11,10 +11,29 @@ router.use('/product', productRoutes);
 router.use('/order', orderRoutes);
 router.use('/auth', authRoutes);
 
-
-// Health check endpoint
+// Enhanced health check endpoint
 router.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK' });
+    const healthcheck = {
+        status: 'OK',
+        timestamp: new Date(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development',
+        memoryUsage: process.memoryUsage(),
+        version: process.version,
+        services: {
+            database: 'OK', // You might want to add actual DB connection check
+            server: 'OK'
+        }
+    };
+    
+    try {
+        res.status(200).json(healthcheck);
+    } catch (error) {
+        healthcheck.status = 'ERROR';
+        healthcheck.message = error.message;
+        res.status(503).json(healthcheck);
+    }
 });
+
 module.exports = router;
 
