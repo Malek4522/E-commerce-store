@@ -26,8 +26,6 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.2",
     "@mui/material": "^6.4.2",
-    "@netlify/functions": "^2.8.2",
-    "@netlify/remix-adapter": "^2.5.1",
     "@nivo/bar": "^0.88.0",
     "@nivo/boxplot": "^0.88.0",
     "@nivo/bullet": "^0.88.0",
