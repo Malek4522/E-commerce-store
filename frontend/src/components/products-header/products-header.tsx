@@ -1,4 +1,3 @@
-import { ProductSortingSelect } from '../product-sorting-select/product-sorting-select';
 import styles from './products-header.module.scss';
 
 interface ProductsHeaderProps {

@@ -145,17 +145,7 @@ export default function AdminOrders() {
         }
     }, []);
 
-    const loadProducts = useCallback(async () => {
-        try {
-            const data = await getProducts();
-            const mappedProducts = data.map(product => mapApiProductToAdminProduct(product));
-            setProducts(mappedProducts);
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to load products';
-            toast.error(message);
-            setError(message);
-        }
-    }, []);
+    
 
     useEffect(() => {
         const initialLoad = async () => {
@@ -570,7 +560,7 @@ export default function AdminOrders() {
                                                                     setOrders(orders.map(o => 
                                                                         o._id === processedOrder._id ? processedOrder : o
                                                                     ));
-                                                                } catch (err) {
+                                                                } catch{
                                                                     setError('Failed to update delivery type');
                                                                 }
                                                             }}

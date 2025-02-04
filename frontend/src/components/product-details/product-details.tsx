@@ -468,7 +468,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                         )}
                                         {deliveryPrice === null && (
                                             <div className={styles.warning}>
-                                                La livraison n'est pas disponible dans cette région
+                                                La livraison n&apos;est pas disponible dans cette région
                                             </div>
                                         )}
                                     </div>
@@ -507,7 +507,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                 },
                                 {
                                     header: 'Politique de Retour & Remboursement',
-                                    content: 'Après avoir sélectionné le produit et effectué une demande de livraison, nous vous appellerons au numéro que vous avez fourni pour confirmer la commande. Vous pouvez annuler la commande à tout moment en nous appelant. Lors de la livraison, vous pouvez vérifier si le produit correspond aux photos et s\'il n\'est pas endommagé. Si vous l\'acceptez, vous payez le livreur et la transaction est terminée. Sinon, vous pouvez simplement refuser la commande. Les commandes achetées ne peuvent pas être retournées ou échangées, sauf si nous livrons des tailles ou des couleurs incorrectes. Dans ce cas, nous les remplaçons avec livraison gratuite. Sinon, vous devrez payer à nouveau les frais de livraison.'
+                                    content: 'Après avoir sélectionné le produit et effectué une demande de livraison, nous vous appellerons au numéro que vous avez fourni pour confirmer la commande. Vous pouvez annuler la commande à tout moment en nous appelant. Lors de la livraison, vous pouvez vérifier si le produit correspond aux photos et s&apos;il n&apos;est pas endommagé. Si vous l&apos;acceptez, vous payez le livreur et la transaction est terminée. Sinon, vous pouvez simplement refuser la commande. Les commandes achetées ne peuvent pas être retournées ou échangées, sauf si nous livrons des tailles ou des couleurs incorrectes. Dans ce cas, nous les remplaçons avec livraison gratuite. Sinon, vous devrez payer à nouveau les frais de livraison.'
                                 }
                             ]}
                             expandIcon={<MinusIcon className={styles.accordionIcon} />}
