@@ -8,9 +8,9 @@ interface UseCategoryResult {
 }
 
 export function useCategory(slug: string): UseCategoryResult {
-    const [data, setData] = useState<Category>();
+    const [data, setData] = useState<Category | undefined>(undefined);
+    const [_setError] = useState<Error | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
         // TODO: Replace with actual API call
@@ -25,5 +25,5 @@ export function useCategory(slug: string): UseCategoryResult {
         setIsLoading(false);
     }, [slug]);
 
-    return { data, isLoading, error };
+    return { data, isLoading, error: _setError };
 } 

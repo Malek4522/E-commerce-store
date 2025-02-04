@@ -1,13 +1,7 @@
-import type { SerializeFrom } from '@remix-run/node';
+import type { Product, Category } from '~/src/api';
 import classNames from 'classnames';
-import React from 'react';
-import type { Product, InventoryStatus, Category } from '~/src/api';
-import { getProductImageUrl } from '~/src/api';
-import { EmptyProductsCategory } from '../empty-products-category/empty-products-category';
-import { ProductCard, ProductCardSkeleton } from '../product-card/product-card';
-import { ProductLink } from '../product-link/product-link';
+import { ProductCard } from '../product-card/product-card';
 import styles from './product-grid.module.scss';
-import { useProducts } from '~/src/api/hooks';
 
 export interface ProductGridProps {
     products: Product[];

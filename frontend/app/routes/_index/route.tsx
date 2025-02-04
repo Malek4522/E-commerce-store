@@ -38,9 +38,9 @@ export default function HomePage() {
             </div>
 
             <div className={styles.cardsSection}>
-                <CategoryLink categorySlug="rope" className="linkCard">
+                <CategoryLink categorySlug="robe" className="linkCard">
                     <img className="linkCardBackground" src={CJpg} alt="" />
-                    <div className="linkCardTitle">Rope</div>
+                    <div className="linkCardTitle">Robe</div>
                 </CategoryLink>
                 <CategoryLink categorySlug="jumpsuit" className="linkCard">
                     <img className="linkCardBackground" src={DWebp} alt="" />
@@ -82,7 +82,7 @@ export default function HomePage() {
             />
 
             <FeaturedProductsSection
-                categorySlug="sold"
+                categorySlug="sale"
                 title="On Sale"
                 description="Don't miss out on these amazing deals."
                 productCount={4}

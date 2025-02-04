@@ -3,7 +3,7 @@ import { useNavigate } from '@remix-run/react';
 import { useAuth } from '../api/auth-context';
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated, checkAuth } = useAuth();
+    const {checkAuth } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {

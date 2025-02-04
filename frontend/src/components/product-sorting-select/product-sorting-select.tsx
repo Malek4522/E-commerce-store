@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { ProductSortBy } from '~/src/api/types';
+import { ProductSortBy } from '~/src/api/product-filters';
 import { useSorting } from '~/src/hooks/use-sorting';
 import styles from './product-sorting-select.module.scss';
 

@@ -35,7 +35,7 @@ export default function ProductDetailsRoute() {
         return (
             <div className={styles.errorContainer}>
                 <h1>Product Not Found</h1>
-                <p>The product you're looking for doesn't exist or has been removed.</p>
+                <p>The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
             </div>
         );
     }
@@ -55,7 +55,7 @@ export default function ProductDetailsRoute() {
     );
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
+export const meta: MetaFunction<typeof loader> = ({ data}) => {
     if (!data) {
         return [
             { title: 'Product Not Found | MZ Prestige' },

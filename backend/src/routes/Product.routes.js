@@ -5,7 +5,7 @@ const { authenticate } = require('../middlewares/auth.middleware');
 
 router.get('/', productController.getProducts);
 router.get('/all-products', productController.getProducts);
-router.get('/rope', productController.getRopeProducts);
+router.get('/robe', productController.getRopeProducts);
 router.get('/jumpsuit', productController.getJumpsuitProducts);
 router.get('/jupe', productController.getJupeProducts);
 router.get('/new', productController.getNewProducts);

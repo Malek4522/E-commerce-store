@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { ProductFilters } from '~/src/api/types';
+import type { ProductFilters } from '~/src/api/product-filters';
 import styles from './applied-product-filters.module.scss';
 
 export interface AppliedProductFiltersProps {

@@ -21,52 +21,51 @@ export interface SelectProps {
 }
 
 export const Select = forwardRef<HTMLButtonElement, SelectProps>(
-    ({ options, value, onChange, placeholder, hasError, className }, ref) => {
-        const selectedOption = options.find(option => option.value === value);
+    function Select({ options, value, onChange, placeholder, hasError, className }, ref) {
+    const selectedOption = options.find(option => option.value === value);
 
-        return (
-            <RadixSelect.Root value={value} onValueChange={onChange}>
-                <RadixSelect.Trigger
-                    ref={ref}
-                    className={classNames(styles.trigger, className, { [styles.error]: hasError })}
-                >
-                    <RadixSelect.Value placeholder={placeholder}>
-                        {selectedOption ? selectedOption.label : placeholder}
-                    </RadixSelect.Value>
-                    <RadixSelect.Icon className={styles.icon}>
-                        <ChevronDownIcon />
-                    </RadixSelect.Icon>
-                </RadixSelect.Trigger>
+    return (
+        <RadixSelect.Root value={value} onValueChange={onChange}>
+            <RadixSelect.Trigger
+                ref={ref}
+                className={classNames(styles.trigger, className, { [styles.error]: hasError })}
+            >
+                <RadixSelect.Value placeholder={placeholder}>
+                    {selectedOption ? selectedOption.label : placeholder}
+                </RadixSelect.Value>
+                <RadixSelect.Icon className={styles.icon}>
+                    <ChevronDownIcon />
+                </RadixSelect.Icon>
+            </RadixSelect.Trigger>
 
-                <RadixSelect.Portal>
-                    <RadixSelect.Content className={styles.content}>
-                        <RadixSelect.Viewport className={styles.viewport}>
-                            {placeholder && (
-                                <RadixSelect.Item
-                                    value=""
-                                    disabled
-                                    className={styles.placeholder}
-                                >
-                                    <RadixSelect.ItemText>{placeholder}</RadixSelect.ItemText>
-                                </RadixSelect.Item>
-                            )}
-                            {options.map(option => (
-                                <RadixSelect.Item
-                                    key={option.value}
-                                    value={option.value}
-                                    disabled={option.disabled}
-                                    className={styles.item}
-                                >
-                                    <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
-                                </RadixSelect.Item>
-                            ))}
-                        </RadixSelect.Viewport>
-                    </RadixSelect.Content>
-                </RadixSelect.Portal>
-            </RadixSelect.Root>
-        );
-    }
-);
+            <RadixSelect.Portal>
+                <RadixSelect.Content className={styles.content}>
+                    <RadixSelect.Viewport className={styles.viewport}>
+                        {placeholder && (
+                            <RadixSelect.Item
+                                value=""
+                                disabled
+                                className={styles.placeholder}
+                            >
+                                <RadixSelect.ItemText>{placeholder}</RadixSelect.ItemText>
+                            </RadixSelect.Item>
+                        )}
+                        {options.map(option => (
+                            <RadixSelect.Item
+                                key={option.value}
+                                value={option.value}
+                                disabled={option.disabled}
+                                className={styles.item}
+                            >
+                                <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
+                            </RadixSelect.Item>
+                        ))}
+                    </RadixSelect.Viewport>
+                </RadixSelect.Content>
+            </RadixSelect.Portal>
+        </RadixSelect.Root>
+    );
+});
 
 export interface SelectItemProps {
     value: string;

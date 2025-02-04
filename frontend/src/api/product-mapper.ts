@@ -29,7 +29,7 @@ export function mapBackendProductToFrontend(product: BackendProduct): FrontendPr
         links: product.links.map(link => ({
             url: link.url,
             type: link.type,
-            id: link._id
+            id: link.url
         })),
         categoryId: product.type.toLowerCase(),
         ribbon: product.isNew ? 'New' : (product.soldPrice > 0 ? 'Sale' : undefined),
@@ -37,6 +37,7 @@ export function mapBackendProductToFrontend(product: BackendProduct): FrontendPr
         inventoryStatus: product.variants.some(variant => variant.quantity > 0) ? 'IN_STOCK' : 'OUT_OF_STOCK',
         variants: product.variants,
         colors: product.colors,
-        sizes: product.sizes
+        sizes: product.sizes,
+        isNew: product.isNew
     };
 } 

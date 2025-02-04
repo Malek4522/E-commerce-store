@@ -1,5 +1,5 @@
 import { useSearchParams } from '@remix-run/react';
-import { ProductFilters } from '~/src/api/types';
+import { ProductFilters } from '~/src/api/product-filters';
 
 export function useFilters() {
     const [searchParams, setSearchParams] = useSearchParams();

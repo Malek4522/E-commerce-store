@@ -5,6 +5,8 @@ import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../.
 import styles from './route.module.scss';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { Link, useNavigate, useSearchParams } from '@remix-run/react';
+import { AuthProvider } from '../../api/auth-context';
+import { toast } from '~/src/components/toast/toast';
 
 // Utility functions
 const getYouTubeVideoId = (url: string) => {
@@ -108,7 +110,7 @@ function DeleteConfirmModal({
             <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
                 <h3 className={styles.modalTitle}>Delete Product</h3>
                 <p className={styles.modalText}>
-                    Are you sure you want to delete "{product.name}"? This action cannot be undone.
+                    Are you sure you want to delete &quot;{product.name}&quot;? This action cannot be undone.
                 </p>
                 <div className={styles.modalActions}>
                     <button 
@@ -139,14 +141,33 @@ function EditProductModal({
     onClose: () => void;
     onSave: (updatedProduct: Product) => void;
 }) {
-    if (!product) return null;
-
-    const [editedProduct, setEditedProduct] = useState<Product>(product);
-    const [newColor, setNewColor] = useState('');
-    const [newSize, setNewSize] = useState('');
+    const [editedProduct, setEditedProduct] = useState<Product>(product || {
+        _id: '',
+        name: '',
+        type: 'Robe',
+        price: 0,
+        soldPrice: 0,
+        links: [],
+        variants: [],
+        colors: [],
+        sizes: [],
+        isNew: true,
+        description: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    });
     const [uploading, setUploading] = useState(false);
     const [newVideoUrl, setNewVideoUrl] = useState('');
-    const [draggedItem, setDraggedItem] = useState<number | null>(null);
+    const [newColor, setNewColor] = useState('');
+    const [newSize, setNewSize] = useState('');
+
+    useEffect(() => {
+        if (product) {
+            setEditedProduct(product);
+        }
+    }, [product]);
+
+    if (!product) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -248,7 +269,7 @@ function EditProductModal({
                 }
                 return null;
             } catch (error) {
-                console.error('Upload failed:', error);
+                toast.error('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
                 return null;
             }
         });
@@ -301,8 +322,9 @@ function EditProductModal({
                 <h3 className={styles.modalTitle}>Edit Product</h3>
                 <form onSubmit={handleSubmit} className={styles.editForm}>
                     <div className={styles.formGroup}>
-                        <label>Name:</label>
+                        <label htmlFor="product-name">Name:</label>
                         <input
+                            id="product-name"
                             type="text"
                             value={editedProduct.name}
                             onChange={e => setEditedProduct({...editedProduct, name: e.target.value})}
@@ -310,8 +332,9 @@ function EditProductModal({
                         />
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Type:</label>
+                        <label htmlFor="product-type">Type:</label>
                         <select
+                            id="product-type"
                             value={editedProduct.type}
                             onChange={e => setEditedProduct({...editedProduct, type: e.target.value as Product['type']})}
                             required
@@ -322,8 +345,9 @@ function EditProductModal({
                         </select>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Price (DA):</label>
+                        <label htmlFor="product-price">Price (DA):</label>
                         <input
+                            id="product-price"
                             type="number"
                             value={editedProduct.price}
                             onChange={e => setEditedProduct({...editedProduct, price: Math.round(parseFloat(e.target.value))})}
@@ -333,9 +357,10 @@ function EditProductModal({
                         />
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Sale Price (DA):</label>
+                        <label htmlFor="product-sale-price">Sale Price (DA):</label>
                         <div className={styles.priceInputGroup}>
                             <input
+                                id="product-sale-price"
                                 type="number"
                                 value={editedProduct.soldPrice || ''}
                                 onChange={e => {
@@ -368,16 +393,17 @@ function EditProductModal({
                         </div>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Description:</label>
+                        <label htmlFor="product-description">Description:</label>
                         <textarea
+                            id="product-description"
                             value={editedProduct.description || ''}
                             onChange={e => setEditedProduct({...editedProduct, description: e.target.value})}
                             rows={3}
                         />
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Variants:</label>
-                        <table className={styles.variantTable}>
+                        <label htmlFor="product-variants">Variants:</label>
+                        <table id="product-variants" className={styles.variantTable}>
                             <thead>
                                 <tr>
                                     <th>Color / Size</th>
@@ -463,8 +489,8 @@ function EditProductModal({
                         </table>
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Media:</label>
-                        <div className={styles.mediaUploadSection}>
+                        <label htmlFor="product-media">Media:</label>
+                        <div id="product-media" className={styles.mediaUploadSection}>
                             <div className={styles.mediaInputs}>
                                 <div className={styles.imageUpload}>
                                     <input
@@ -566,30 +592,36 @@ function EditProductModal({
     );
 }
 
-export default function AdminProducts() {
+export default function AdminProductsRoute() {
+    // All state declarations at the top level
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [searchFilters, setSearchFilters] = useState({
+    const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [showNewProductModal, setShowNewProductModal] = useState(false);
+    const [selectedMedia, setSelectedMedia] = useState<ProductLink | null>(null);
+    const [viewingAllMedia, setViewingAllMedia] = useState(false);
+    const [currentMediaItems, setCurrentMediaItems] = useState<ProductLink[]>([]);
+    const [_searchFilters, _setSearchFilters] = useState({
         query: '',
         type: '',
         isNew: ''
     });
-    const [selectedMedia, setSelectedMedia] = useState<ProductLink | null>(null);
-    const [viewingAllMedia, setViewingAllMedia] = useState(false);
-    const [currentMediaItems, setCurrentMediaItems] = useState<ProductLink[]>([]);
-    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-    const [productToEdit, setProductToEdit] = useState<Product | null>(null);
-    const [showNewProductModal, setShowNewProductModal] = useState(false);
-    const [searchParams] = useSearchParams();
-    const productId = searchParams.get('id');
+    const [_uploading, _setUploading] = useState(false);
+    const [_newVideoUrl, _setNewVideoUrl] = useState('');
+    const [_draggedItem, _setDraggedItem] = useState<ProductLink | null>(null);
+    const [_newColor, _setNewColor] = useState('');
+    const [_editedProduct, _setEditedProduct] = useState<Product | null>(null);
 
-    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const _navigate = useNavigate();
 
     // Memoize handlers to prevent unnecessary re-renders
     const handleCloseModal = useCallback(() => {
         setSelectedMedia(null);
         setViewingAllMedia(false);
+        setCurrentMediaItems([]);
     }, []);
 
     const handleViewAllMedia = useCallback((links: ProductLink[]) => {
@@ -715,178 +747,181 @@ export default function AdminProducts() {
     }, []);
 
     useEffect(() => {
+        const productId = searchParams.get('id');
         if (productId) {
             const product = products.find(p => p._id === productId);
             if (product) {
                 setProductToEdit(product);
             }
         }
-    }, [productId, products]);
+    }, [searchParams, products]);
 
     function filterProducts(products: Product[]): Product[] {
         return products.filter(product => {
-            const matchesQuery = searchFilters.query.toLowerCase().trim() === '' || 
-                product.name.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
-                product.description?.toLowerCase().includes(searchFilters.query.toLowerCase());
+            const matchesQuery = _searchFilters.query.toLowerCase().trim() === '' || 
+                product.name.toLowerCase().includes(_searchFilters.query.toLowerCase()) ||
+                product.description?.toLowerCase().includes(_searchFilters.query.toLowerCase());
 
-            const matchesType = searchFilters.type === '' || product.type === searchFilters.type;
-            const matchesNew = searchFilters.isNew === '' || 
-                (searchFilters.isNew === 'true' ? product.isNew : !product.isNew);
+            const matchesType = _searchFilters.type === '' || product.type === _searchFilters.type;
+            const matchesNew = _searchFilters.isNew === '' || 
+                (_searchFilters.isNew === 'true' ? product.isNew : !product.isNew);
 
             return matchesQuery && matchesType && matchesNew;
         });
     }
 
     return (
-        <ProtectedRoute>
-            <div className={styles.productsPage}>
-                <header className={styles.header}>
-                    <div className={styles.headerContent}>
-                        <div className={styles.headerLeft}>
-                            <h1>Admin Dashboard</h1>
-                            <nav className={styles.nav}>
-                                <Link to="/admin/orders" className={styles.navLink}>
-                                    Orders
-                                </Link>
-                                <Link to="/admin/products" className={`${styles.navLink} ${styles.active}`}>
-                                    Products
-                                </Link>
-                            </nav>
+        <AuthProvider>
+            <ProtectedRoute>
+                <div className={styles.productsPage}>
+                    <header className={styles.header}>
+                        <div className={styles.headerContent}>
+                            <div className={styles.headerLeft}>
+                                <h1>Admin Dashboard</h1>
+                                <nav className={styles.nav}>
+                                    <Link to="/admin/orders" className={styles.navLink}>
+                                        Orders
+                                    </Link>
+                                    <Link to="/admin/products" className={`${styles.navLink} ${styles.active}`}>
+                                        Products
+                                    </Link>
+                                </nav>
+                            </div>
+                            <button 
+                                onClick={() => setShowNewProductModal(true)}
+                                className={styles.addButton}
+                            >
+                                Add Product
+                            </button>
                         </div>
-                        <button 
-                            onClick={() => setShowNewProductModal(true)}
-                            className={styles.addButton}
-                        >
-                            Add Product
-                        </button>
-                    </div>
-                </header>
+                    </header>
 
-                {error && (
-                    <div className={styles.error}>
-                        {error}
-                        <button onClick={() => {/* TODO: Retry loading products */}}>Retry</button>
-                    </div>
-                )}
+                    {error && (
+                        <div className={styles.error}>
+                            {error}
+                            <button onClick={() => {/* TODO: Retry loading products */}}>Retry</button>
+                        </div>
+                    )}
 
-                <div className={styles.content}>
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Media</th>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Price</th>
-                                    <th>Total Stock</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
+                    <div className={styles.content}>
+                        <div className={styles.tableWrapper}>
+                            <table className={styles.table}>
+                                <thead>
                                     <tr>
-                                        <td colSpan={7} className={styles.emptyState}>
-                                            Loading products...
-                                        </td>
+                                        <th>Media</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Price</th>
+                                        <th>Total Stock</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ) : products.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className={styles.emptyState}>
-                                            No products found
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filterProducts(products).map((product) => (
-                                        <tr key={product._id}>
-                                            <td data-label="Media">{renderMediaLinks(product.links)}</td>
-                                            <td data-label="Name">{product.name}</td>
-                                            <td data-label="Type">{product.type}</td>
-                                            <td data-label="Price">
-                                                <div>
-                                                    {formatPrice(product.price)}
-                                                    {product.soldPrice > 0 && (
-                                                        <div className={styles.soldPrice}>
-                                                            {formatPrice(product.soldPrice)}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td data-label="Stock">{getTotalStock(product.variants)}</td>
-                                            <td data-label="Status">
-                                                <div className={styles.badges}>
-                                                    {product.isNew && (
-                                                        <span className={`${styles.badge} ${styles.new}`}>New</span>
-                                                    )}
-                                                    {product.soldPrice > 0 && (
-                                                        <span className={`${styles.badge} ${styles.sale}`}>
-                                                            Sale
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td data-label="Actions">
-                                                <div className={styles.actions}>
-                                                    <button 
-                                                        className={`${styles.actionButton} ${styles.edit}`}
-                                                        onClick={() => handleEdit(product)}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button 
-                                                        className={`${styles.actionButton} ${styles.delete}`}
-                                                        onClick={() => handleDelete(product)}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={7} className={styles.emptyState}>
+                                                Loading products...
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : products.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className={styles.emptyState}>
+                                                No products found
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filterProducts(products).map((product) => (
+                                            <tr key={product._id}>
+                                                <td data-label="Media">{renderMediaLinks(product.links)}</td>
+                                                <td data-label="Name">{product.name}</td>
+                                                <td data-label="Type">{product.type}</td>
+                                                <td data-label="Price">
+                                                    <div>
+                                                        {formatPrice(product.price)}
+                                                        {product.soldPrice > 0 && (
+                                                            <div className={styles.soldPrice}>
+                                                                {formatPrice(product.soldPrice)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td data-label="Stock">{getTotalStock(product.variants)}</td>
+                                                <td data-label="Status">
+                                                    <div className={styles.badges}>
+                                                        {product.isNew && (
+                                                            <span className={`${styles.badge} ${styles.new}`}>New</span>
+                                                        )}
+                                                        {product.soldPrice > 0 && (
+                                                            <span className={`${styles.badge} ${styles.sale}`}>
+                                                                Sale
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td data-label="Actions">
+                                                    <div className={styles.actions}>
+                                                        <button 
+                                                            className={`${styles.actionButton} ${styles.edit}`}
+                                                            onClick={() => handleEdit(product)}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button 
+                                                            className={`${styles.actionButton} ${styles.delete}`}
+                                                            onClick={() => handleDelete(product)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <MediaPreviewModal 
-                    media={selectedMedia}
-                    onClose={handleCloseModal}
-                    allMedia={viewingAllMedia}
-                    mediaItems={currentMediaItems}
-                />
-                <DeleteConfirmModal
-                    product={productToDelete}
-                    onClose={() => setProductToDelete(null)}
-                    onConfirm={confirmDelete}
-                />
-                <EditProductModal
-                    product={productToEdit}
-                    onClose={() => setProductToEdit(null)}
-                    onSave={handleSaveEdit}
-                />
-                {showNewProductModal && (
-                    <EditProductModal
-                        product={{
-                            _id: '',
-                            name: '',
-                            description: '',
-                            type: 'Jumpsuit',
-                            price: 0,
-                            variants: [],
-                            soldPrice: 0,
-                            isNew: true,
-                            links: [],
-                            colors: [],
-                            sizes: [],
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
-                        }}
-                        onClose={() => setShowNewProductModal(false)}
-                        onSave={handleAddNewProduct}
+                    <MediaPreviewModal 
+                        media={selectedMedia}
+                        onClose={handleCloseModal}
+                        allMedia={viewingAllMedia}
+                        mediaItems={currentMediaItems}
                     />
-                )}
-            </div>
-        </ProtectedRoute>
+                    <DeleteConfirmModal
+                        product={productToDelete}
+                        onClose={() => setProductToDelete(null)}
+                        onConfirm={confirmDelete}
+                    />
+                    <EditProductModal
+                        product={productToEdit}
+                        onClose={() => setProductToEdit(null)}
+                        onSave={handleSaveEdit}
+                    />
+                    {showNewProductModal && (
+                        <EditProductModal
+                            product={{
+                                _id: '',
+                                name: '',
+                                description: '',
+                                type: 'Jumpsuit',
+                                price: 0,
+                                variants: [],
+                                soldPrice: 0,
+                                isNew: true,
+                                links: [],
+                                colors: [],
+                                sizes: [],
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                            }}
+                            onClose={() => setShowNewProductModal(false)}
+                            onSave={handleAddNewProduct}
+                        />
+                    )}
+                </div>
+            </ProtectedRoute>
+        </AuthProvider>
     );
 }
 

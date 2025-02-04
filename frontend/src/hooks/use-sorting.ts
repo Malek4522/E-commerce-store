@@ -1,5 +1,5 @@
 import { useSearchParams } from '@remix-run/react';
-import { ProductSortBy } from '~/src/api/types';
+import { ProductSortBy } from '~/src/api/product-filters';
 
 export function useSorting() {
     const [searchParams, setSearchParams] = useSearchParams();

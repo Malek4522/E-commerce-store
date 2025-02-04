@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Product, InventoryStatus } from './types';
+import type { Product } from './types';
 import { mapBackendProductToFrontend } from './product-mapper';
 
 const API_URL = import.meta.env.VITE_API_URL;

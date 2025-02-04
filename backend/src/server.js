@@ -14,7 +14,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-    origin: 'http://localhost:5173', // Frontend URL
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Frontend URL from environment variable
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -23,14 +23,11 @@ app.use(cors({
 // Other Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('src/public'));
 app.use(cookieParser());
+app.use(express.static('src/public'));
 
 // Routes
 app.use('/api', routes);
-
-// Serve static files
-app.use(express.static('src/public'));
 
 // Handle 404
 app.use((req, res) => {
@@ -51,5 +48,5 @@ const PORT = process.env.PORT || 5000;
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
+    console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

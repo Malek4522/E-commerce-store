@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useLocation } from '@remix-run/react';
-import { ProductFilters } from '~/src/api/types';
+import type { ProductFilters } from '~/src/api/product-filters';
 import { productFiltersFromSearchParams, searchParamsFromProductFilters } from '~/src/api/product-utils';
 import { mergeUrlSearchParams, useSearchParamsOptimistic } from '~/src/api/utils';
 import { PriceFilter } from './price-filter';
@@ -14,8 +14,8 @@ interface ProductFiltersProps {
     className?: string;
 }
 
-export const ProductFilters = ({ className }: ProductFiltersProps) => {
-    const location = useLocation();
+export const ProductFiltersComponent = ({ className }: ProductFiltersProps) => {
+    const _location = useLocation();
     const [searchParams, setSearchParams] = useSearchParamsOptimistic();
     const filters = productFiltersFromSearchParams(searchParams);
 
@@ -26,6 +26,16 @@ export const ProductFilters = ({ className }: ProductFiltersProps) => {
         },
         [setSearchParams],
     );
+
+    const handleClearFilter = (key: string) => {
+        const nextFilters = { ...filters } as ProductFilters;
+        delete (nextFilters as any)[key];
+        handleFiltersChange(nextFilters);
+    };
+
+    const handleClearAllFilters = () => {
+        handleFiltersChange({});
+    };
 
     return (
         <div className={className}>
@@ -46,7 +56,9 @@ export const ProductFilters = ({ className }: ProductFiltersProps) => {
             <AppliedProductFilters
                 className={styles.appliedFilters}
                 filters={filters}
-                onChange={handleFiltersChange}
+                priceRange={{ min: 0, max: 10000 }}
+                onClearFilter={handleClearFilter}
+                onClearAllFilters={handleClearAllFilters}
             />
         </div>
     );

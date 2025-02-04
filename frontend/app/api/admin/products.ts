@@ -1,8 +1,10 @@
 import type { Product } from './types';
+import { getErrorMessage } from '~/src/api/utils';
+import { toast } from '~/src/components/toast/toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 if (!API_URL) {
-    console.error('VITE_API_URL environment variable is not set');
+    toast.error('VITE_API_URL environment variable is not set');
 }
 
 function handleAuthError(status: number) {
@@ -12,126 +14,173 @@ function handleAuthError(status: number) {
 }
 
 export async function fetchProducts(): Promise<Product[]> {
-    const response = await fetch(`${API_URL}/product/admin`, {
-        credentials: 'include'
-    });
+    try {
+        const response = await fetch(`${API_URL}/product/admin`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
 
-    handleAuthError(response.status);
+        if (!response.ok) {
+            throw new Error('Failed to fetch products');
+        }
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch products');
+        const { data } = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error('Invalid response format: expected an array of products');
+        }
+        return data;
+    } catch (error) {
+        throw getErrorMessage(error);
     }
-
-    const data = await response.json();
-    return data.data;
 }
 
 export async function createProduct(product: Omit<Product, '_id'>): Promise<Product> {
-    const response = await fetch(`${API_URL}/product`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(product),
-    });
-    
-    handleAuthError(response.status);
+    try {
+        const response = await fetch(`${API_URL}/product`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(product),
+        });
+        
+        handleAuthError(response.status);
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create product');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create product');
+        }
+        
+        const { data } = await response.json();
+        return data;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to create product';
+        toast.error(message);
+        throw error;
     }
-    
-    const data = await response.json();
-    return data.data;
 }
 
 export async function updateProduct(id: string, product: Partial<Product>): Promise<Product> {
-    const response = await fetch(`${API_URL}/product/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(product),
-    });
-    
-    handleAuthError(response.status);
+    try {
+        const response = await fetch(`${API_URL}/product/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(product),
+        });
+        
+        handleAuthError(response.status);
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update product');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update product');
+        }
+        
+        const { data } = await response.json();
+        return data;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to update product';
+        toast.error(message);
+        throw error;
     }
-    
-    const data = await response.json();
-    return data.data;
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-    const response = await fetch(`${API_URL}/product/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-    });
-    
-    handleAuthError(response.status);
+    try {
+        const response = await fetch(`${API_URL}/product/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        
+        handleAuthError(response.status);
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete product');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to delete product');
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to delete product';
+        toast.error(message);
+        throw error;
     }
 }
 
 export async function setProductNew(id: string, isNew: boolean): Promise<Product> {
-    const response = await fetch(`${API_URL}/product/${id}/set-new`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ isNew }),
-    });
-    
-    handleAuthError(response.status);
+    try {
+        const response = await fetch(`${API_URL}/product/${id}/set-new`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ isNew }),
+        });
+        
+        handleAuthError(response.status);
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update product new status');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update product new status');
+        }
+        
+        const { data } = await response.json();
+        return data;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to update product status';
+        toast.error(message);
+        throw error;
     }
-    
-    const data = await response.json();
-    return data.data;
 }
 
 export async function getProduct(id: string): Promise<Product> {
-    const response = await fetch(`${API_URL}/product/admin/${id}`, {
-        credentials: 'include'
-    });
+    try {
+        const response = await fetch(`${API_URL}/product/${id}`, {
+            credentials: 'include'
+        });
 
-    handleAuthError(response.status);
+        handleAuthError(response.status);
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch product');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch product');
+        }
+
+        const { data } = await response.json();
+        return data;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to fetch product';
+        toast.error(message);
+        throw error;
     }
-
-    const data = await response.json();
-    return data.data;
 }
 
 export async function getProducts(): Promise<Product[]> {
-    const response = await fetch(`${API_URL}/product/admin`, {
-        credentials: 'include'
-    });
+    try {
+        const response = await fetch(`${API_URL}/product/admin`, {
+            credentials: 'include'
+        });
 
-    handleAuthError(response.status);
+        handleAuthError(response.status);
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch products');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to fetch products');
+        }
+
+        const { data } = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error('Invalid response format: expected an array of products');
+        }
+        return data;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to fetch products';
+        toast.error(message);
+        throw error;
     }
-
-    const data = await response.json();
-    return data.data;
 } 

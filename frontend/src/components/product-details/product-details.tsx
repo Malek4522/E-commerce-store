@@ -1,30 +1,59 @@
 import { useState } from 'react';
 import classNames from 'classnames';
 import { Accordion } from '../accordion/accordion';
-import { BreadcrumbData, Breadcrumbs } from '../breadcrumbs/breadcrumbs';
+import { Breadcrumbs } from '../breadcrumbs/breadcrumbs';
 import { MinusIcon, PlusIcon } from '../icons';
 import { ProductImages } from '../product-images/product-images';
-import { ProductOption } from '../product-option/product-option';
-import { ProductPrice } from '../product-price/product-price';
 import { toast } from '../toast/toast';
 import { initializeApiForRequest } from '~/src/api/session';
-import { Product } from '~/src/api/types';
 import { getErrorMessage } from '~/src/utils';
 import { calculateDeliveryPrice, calculateTotalPrice } from '~/app/utils/delivery-prices';
 
 import styles from './product-details.module.scss';
 
-// Add ProductVariant type
-interface ProductVariant {
+interface MediaItem {
+    url: string;
+    type: 'image' | 'video';
+    altText?: string;
+}
+
+interface ProductImage {
+    url: string;
+    altText?: string;
+}
+
+interface ProductLink {
+    url: string;
+    type: string;
+}
+
+interface ProductVariantItem {
     size: string;
     color: string;
     quantity: number;
 }
 
-export interface ProductDetailsProps {
-    product: Product;
-    canonicalUrl: string;
-    breadcrumbs: BreadcrumbData[];
+interface ProductPrice {
+    amount: number;
+    formatted: string;
+    soldPrice?: number;
+    soldPriceFormatted?: string;
+}
+
+interface ProductVariant {
+    id: string;
+    name: string;
+    description?: string;
+    images: ProductImage[];
+    links?: ProductLink[];
+    variants: ProductVariantItem[];
+    price: ProductPrice;
+}
+
+interface ProductDetailsProps {
+    product: ProductVariant;
+    canonicalUrl?: string;
+    breadcrumbs: { title: string; to: string }[];
 }
 
 // Get wilayas from a constant since we can't import from delivery-prices
@@ -48,10 +77,10 @@ function formatPrice(price: number | undefined | null): string {
     return `${formattedWhole},${decimal} DA`;
 }
 
-export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDetailsProps) {
-    const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrumbs }: ProductDetailsProps) {
+    const [_selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
     const [isAddingToCart, setIsAddingToCart] = useState(false);
-    const [addToCartAttempted, setAddToCartAttempted] = useState(false);
+    const [_addToCartAttempted, _setAddToCartAttempted] = useState(false);
     const [showOrderForm, setShowOrderForm] = useState(false);
     const [orderForm, setOrderForm] = useState({
         fullName: '',
@@ -64,39 +93,37 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
     });
 
     // Transform product links into the format expected by ProductImages
-    const mediaItems = [
-        // Add regular images first
-        ...(product.images || []).map(image => ({
+    const mediaItems: MediaItem[] = [
+        ...(product.images || []).map((image: ProductImage) => ({
             url: image.url,
             type: 'image' as const,
             altText: image.altText || product.name
         })),
-        // Add video links
         ...((product.links || [])
-            .filter(link => link.type === 'video')
-            .map(link => ({
+            .filter((link: ProductLink) => link.type === 'video')
+            .map((link: ProductLink) => ({
                 url: link.url,
-                type: link.type,
+                type: 'video' as const,
                 altText: product.name
             })))
     ];
 
-    const handleOptionChange = (name: string, value: string) => {
+    const _handleOptionChange = (name: string, value: string) => {
         setSelectedOptions(prev => ({ ...prev, [name]: value }));
     };
 
     // Get available variants
-    const getAvailableColors = (selectedSize: string = '') => {
+    const _getAvailableColors = (selectedSize: string = '') => {
         if (!product.variants) return [];
         return [...new Set(
             product.variants
-                .filter(v => v.quantity > 0) // Only variants with stock
-                .filter(v => !selectedSize || v.size === selectedSize)
-                .map(v => v.color)
+                .filter((v: ProductVariantItem) => v.quantity > 0)
+                .filter((v: ProductVariantItem) => !selectedSize || v.size === selectedSize)
+                .map((v: ProductVariantItem) => v.color)
         )];
     };
 
-    const getAvailableSizes = (selectedColor: string = '') => {
+    const _getAvailableSizes = (selectedColor: string = '') => {
         if (!product.variants) return [];
         return [...new Set(
             product.variants
@@ -107,7 +134,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
     };
 
     // Check if a specific variant is available
-    const isVariantAvailable = (color: string, size: string) => {
+    const _isVariantAvailable = (color: string, size: string) => {
         if (!product.variants) return false;
         return product.variants.some(v => 
             v.color === color && 
@@ -116,7 +143,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
         );
     };
 
-    const handleOrderFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const _handleOrderFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setOrderForm(prev => {
             const updates: Partial<typeof prev> = { [name]: value };
@@ -153,7 +180,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
     const deliveryPrice = calculateDeliveryPrice(orderForm.state, orderForm.delivery);
     const totalPrice = calculateTotalPrice(basePrice, orderForm.state, orderForm.delivery);
 
-    const handleSubmitOrder = async (e: React.FormEvent) => {
+    const _handleSubmitOrder = async (e: React.FormEvent) => {
         e.preventDefault();
         
         if (!orderForm.color || !orderForm.size) {
@@ -163,7 +190,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
 
         try {
             setIsAddingToCart(true);
-            const { api } = await initializeApiForRequest(new Request(window.location.href));
+            await initializeApiForRequest(new Request(window.location.href));
             
             // Create the order
             const response = await fetch(`${import.meta.env.VITE_API_URL}/order`, {
@@ -206,7 +233,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
         }
     };
 
-    const handleBuyNow = () => {
+    const _handleBuyNow = () => {
         if (isOutOfStock) {
             toast.error('Product is out of stock');
             return;
@@ -268,7 +295,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                         className={classNames(styles.addToCartButton, {
                             [styles.outOfStock]: isOutOfStock
                         })}
-                        onClick={handleBuyNow}
+                        onClick={_handleBuyNow}
                         disabled={isOutOfStock || isAddingToCart}
                     >
                         {isOutOfStock ? 'Out of stock' : isAddingToCart ? 'Processing...' : 'Buy Now'}
@@ -278,10 +305,10 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                         <div className={styles.modalOverlay}>
                             <div className={styles.modal}>
                                 <h2>Complete Your Order</h2>
-                                <form onSubmit={handleSubmitOrder}>
+                                <form onSubmit={_handleSubmitOrder}>
                                     <div className={styles.formGroup}>
-                                        <label>Select Variant</label>
-                                        <div className={styles.variantMatrix}>
+                                        <label htmlFor="variant-matrix">Select Variant</label>
+                                        <div id="variant-matrix" className={styles.variantMatrix}>
                                             <table>
                                                 <thead>
                                                     <tr>
@@ -345,7 +372,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                                             id="fullName"
                                             name="fullName"
                                             value={orderForm.fullName}
-                                            onChange={handleOrderFormChange}
+                                            onChange={_handleOrderFormChange}
                                             required
                                         />
                                     </div>
@@ -357,7 +384,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                                             id="phoneNumber"
                                             name="phoneNumber"
                                             value={orderForm.phoneNumber}
-                                            onChange={handleOrderFormChange}
+                                            onChange={_handleOrderFormChange}
                                             required
                                         />
                                     </div>
@@ -368,7 +395,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                                             id="state"
                                             name="state"
                                             value={orderForm.state}
-                                            onChange={handleOrderFormChange}
+                                            onChange={_handleOrderFormChange}
                                             required
                                         >
                                             {WILAYAS.map((wilaya: string) => (
@@ -386,21 +413,21 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                                             id="region"
                                             name="region"
                                             value={orderForm.region}
-                                            onChange={handleOrderFormChange}
+                                            onChange={_handleOrderFormChange}
                                             required
                                         />
                                     </div>
 
                                     <div className={styles.formGroup}>
                                         <label htmlFor="delivery">Delivery Type</label>
-                                        <div className={styles.deliveryOptions}>
+                                        <div id="delivery" className={styles.deliveryOptions}>
                                             <button
                                                 type="button"
                                                 className={classNames({
                                                     [styles.selected]: orderForm.delivery === 'home',
                                                     [styles.home]: true
                                                 })}
-                                                onClick={() => handleOrderFormChange({
+                                                onClick={() => _handleOrderFormChange({
                                                     target: { name: 'delivery', value: 'home' }
                                                 } as any)}
                                             >
@@ -412,7 +439,7 @@ export function ProductDetails({ product, canonicalUrl, breadcrumbs }: ProductDe
                                                     [styles.selected]: orderForm.delivery === 'center',
                                                     [styles.center]: true
                                                 })}
-                                                onClick={() => handleOrderFormChange({
+                                                onClick={() => _handleOrderFormChange({
                                                     target: { name: 'delivery', value: 'center' }
                                                 } as any)}
                                             >

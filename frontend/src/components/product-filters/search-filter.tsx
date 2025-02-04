@@ -19,8 +19,9 @@ export const SearchFilter = ({ value = '', onChange }: SearchFilterProps) => {
                 placeholder="Search products..."
                 defaultValue={value}
                 onChange={(e) => handleChange(e.target.value)}
-                icon={<SearchIcon />}
+                className={styles.searchInput}
             />
+            <SearchIcon className={styles.searchIcon} />
         </div>
     );
 }; 

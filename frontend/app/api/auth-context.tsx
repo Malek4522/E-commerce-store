@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             setIsAuthenticated(isValid);
             return isValid;
-        } catch (error) {
+        } catch {
             return isAuthenticated;
         }
     }, [isAuthenticated, isAdminRoute]);
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             setIsAuthenticated(success);
             return success;
-        } catch (error) {
+        } catch {
             setIsAuthenticated(false);
             return false;
         }

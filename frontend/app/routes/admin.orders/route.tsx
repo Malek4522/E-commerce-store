@@ -1,47 +1,126 @@
-import { useEffect, useState } from 'react';
-import type { MetaFunction } from '@remix-run/react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from '@remix-run/react';
 import { getOrders, updateOrderStatus, deleteOrder, updateOrder, createOrder } from '../../api/admin/orders';
-import { getProduct, getProducts } from '../../api/admin/products';
-import type { ProductLink, ProductVariant, Order as BaseOrder, Product } from '../../api/admin/types';
+import { getProducts } from '../../api/admin/products';
 import { 
     calculateDeliveryPrice, 
     calculateTotalPrice, 
     getAvailableDeliveryTypes,
-    isDeliveryAvailable,
-    getDeliveryPriceWithLabel,
     getAllWilayas
 } from '../../utils/delivery-prices';
 import styles from './route.module.scss';
+import { toast } from '~/src/components/toast/toast';
 
-type OrderProduct = {
+type OrderStatus = 'waiting' | 'delivering' | 'delivered' | 'canceled';
+
+interface AdminProductLink {
+    url: string;
+    type: 'video' | 'image';
+}
+
+interface AdminProductVariant {
+    size: string;
+    color: string;
+    quantity: number;
+}
+
+interface AdminProduct {
     _id: string;
     name: string;
     price: number;
     soldPrice?: number;
-    links: ProductLink[];
+    links: AdminProductLink[];
     slug: string;
-    variants: ProductVariant[];
+    variants: AdminProductVariant[];
     colors: string[];
     sizes: string[];
-};
+}
 
-type OrderStatus = 'waiting' | 'delivering' | 'delivered' | 'canceled';
+interface ApiOrder {
+    _id: string;
+    product: {
+        _id: string;
+        name: string;
+        price: number;
+        soldPrice?: number;
+        links: AdminProductLink[];
+        slug: string;
+        variants: AdminProductVariant[];
+        colors: string[];
+        sizes: string[];
+        quantity?: number;
+    };
+    fullName: string;
+    phoneNumber: string;
+    state: string;
+    region: string;
+    delivery: 'home' | 'center';
+    status: OrderStatus;
+    createdAt: string;
+    updatedAt: string;
+    color: string;
+    size: string;
+}
 
-interface Order extends Omit<BaseOrder, 'product'> {
-    product: OrderProduct;
+interface AdminOrder {
+    _id: string;
+    product: AdminProduct & { quantity: number };
+    fullName: string;
+    phoneNumber: string;
+    state: string;
+    region: string;
+    delivery: 'home' | 'center';
+    status: OrderStatus;
+    createdAt: string;
+    updatedAt: string;
+    color: string;
+    size: string;
+}
+
+function mapApiOrderToAdminOrder(apiOrder: ApiOrder): AdminOrder {
+    return {
+        _id: apiOrder._id,
+        product: {
+            ...apiOrder.product,
+            quantity: apiOrder.product.quantity || 1
+        },
+        fullName: apiOrder.fullName,
+        phoneNumber: apiOrder.phoneNumber,
+        state: apiOrder.state,
+        region: apiOrder.region,
+        delivery: apiOrder.delivery,
+        status: apiOrder.status,
+        createdAt: apiOrder.createdAt,
+        updatedAt: apiOrder.updatedAt,
+        color: apiOrder.color,
+        size: apiOrder.size
+    };
+}
+
+function mapApiProductToAdminProduct(apiProduct: any): AdminProduct {
+    return {
+        _id: apiProduct._id,
+        name: apiProduct.name,
+        price: apiProduct.price,
+        soldPrice: apiProduct.soldPrice,
+        links: apiProduct.links || [],
+        slug: apiProduct.slug || apiProduct.name.toLowerCase().replace(/ /g, '-'),
+        variants: apiProduct.variants || [],
+        colors: apiProduct.colors || [],
+        sizes: apiProduct.sizes || []
+    };
 }
 
 export default function AdminOrders() {
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [orders, setOrders] = useState<AdminOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [editingOrder, setEditingOrder] = useState<AdminOrder | null>(null);
+    const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
     const [isAddingOrder, setIsAddingOrder] = useState(false);
-    const [products, setProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<AdminProduct[]>([]);
     const [selectedProductId, setSelectedProductId] = useState<string>('');
-    const [newOrder, setNewOrder] = useState<Omit<Order, '_id' | 'createdAt' | 'updatedAt'> | null>(null);
+    const [newOrder, setNewOrder] = useState<Omit<AdminOrder, '_id' | 'createdAt' | 'updatedAt'> | null>(null);
     const [searchFilters, setSearchFilters] = useState({
         query: '',
         status: '',
@@ -49,12 +128,39 @@ export default function AdminOrders() {
         dateRange: 'all'
     });
     const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
-    const navigate = useNavigate();
+    const _navigate = useNavigate();
+
+    const loadOrders = useCallback(async () => {
+        try {
+            const data = await getOrders();
+            const ordersWithProducts = data.map(order => mapApiOrderToAdminOrder(order));
+            setOrders(ordersWithProducts);
+            setError(null);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to load orders';
+            toast.error(message);
+            setError(message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const loadProducts = useCallback(async () => {
+        try {
+            const data = await getProducts();
+            const mappedProducts = data.map(product => mapApiProductToAdminProduct(product));
+            setProducts(mappedProducts);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to load products';
+            toast.error(message);
+            setError(message);
+        }
+    }, []);
 
     useEffect(() => {
         loadOrders();
         loadProducts();
-    }, []);
+    }, [loadOrders, loadProducts]);
 
     useEffect(() => {
         if (selectedProductId) {
@@ -65,7 +171,7 @@ export default function AdminOrders() {
             const firstAvailableVariant = product.variants.find(v => v.quantity > 0);
             if (!firstAvailableVariant) return;
 
-            const newOrderData: Omit<Order, '_id' | 'createdAt' | 'updatedAt'> = {
+            const newOrderData: Omit<AdminOrder, '_id' | 'createdAt' | 'updatedAt'> = {
                 product: {
                     _id: product._id,
                     name: product.name,
@@ -75,7 +181,8 @@ export default function AdminOrders() {
                     slug: product.name.toLowerCase().replace(/ /g, '-'),
                     variants: product.variants,
                     colors: product.colors,
-                    sizes: product.sizes
+                    sizes: product.sizes,
+                    quantity: 1
                 },
                 color: firstAvailableVariant.color,
                 size: firstAvailableVariant.size,
@@ -93,7 +200,7 @@ export default function AdminOrders() {
     }, [selectedProductId, products]);
 
     // Helper function to ensure product price is a number
-    function ensureOrderPrice(order: Order): Order {
+    function ensureOrderPrice(order: AdminOrder): AdminOrder {
         const result = {
             ...order,
             product: {
@@ -104,58 +211,26 @@ export default function AdminOrders() {
         return result;
     }
 
-    async function loadOrders() {
-        try {
-            const data = await getOrders();
-            // Ensure product data is properly populated
-            const ordersWithProducts = data.map(order => ensureOrderPrice(order));
-            setOrders(ordersWithProducts);
-            setError(null);
-        } catch (err) {
-            if (err instanceof Error && err.message === 'No authentication token found') {
-                navigate('/admin/login');
-            } else {
-                setError('Failed to load orders');
-            }
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function loadProducts() {
-        try {
-            const data = await getProducts();
-            setProducts(data);
-        } catch (err) {
-            setError('Failed to load products');
-        }
-    }
-
     async function handleStatusUpdate(orderId: string, statusNumber: number) {
         try {
-            // Keep the existing order data
             const existingOrder = orders.find(o => o._id === orderId);
             if (!existingOrder) return;
 
             const updatedOrder = await updateOrderStatus(orderId, statusNumber);
-            // Merge the response with existing order data to preserve product information
-            const mergedOrder = {
+            const mappedOrder = mapApiOrderToAdminOrder({
                 ...existingOrder,
                 status: updatedOrder.status,
                 updatedAt: updatedOrder.updatedAt
-            };
-            // Process the merged order to ensure price is a number
-            const processedOrder = ensureOrderPrice(mergedOrder);
+            } as ApiOrder);
+            
             setOrders(orders.map(order => 
-                order._id === processedOrder._id ? processedOrder : order
+                order._id === mappedOrder._id ? mappedOrder : order
             ));
             setError(null);
-        } catch (err) {
-            if (err instanceof Error && err.message === 'No authentication token found') {
-                navigate('/admin/login');
-            } else {
-                setError('Failed to update order status');
-            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to update order status';
+            toast.error(message);
+            setError(message);
         }
     }
 
@@ -168,28 +243,49 @@ export default function AdminOrders() {
             await deleteOrder(orderId);
             setOrders(orders.filter(order => order._id !== orderId));
             setError(null);
-        } catch (err) {
-            setError('Failed to delete order');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to delete order';
+            toast.error(message);
+            setError(message);
         }
     }
 
-    async function handleUpdateOrder(order: Order) {
+    async function handleUpdateOrder(order: AdminOrder) {
         try {
-            const updatedOrder = await updateOrder(order._id, order);
-            // Process the updated order to ensure price is a number
-            const processedOrder = ensureOrderPrice(updatedOrder);
-            setOrders(orders.map(o => o._id === processedOrder._id ? processedOrder : o));
+            const updatedOrder = await updateOrder(order._id, {
+                fullName: order.fullName,
+                phoneNumber: order.phoneNumber,
+                state: order.state,
+                region: order.region,
+                delivery: order.delivery,
+                status: order.status,
+                color: order.color,
+                size: order.size
+            });
+            
+            const mappedOrder = mapApiOrderToAdminOrder({
+                ...order,
+                ...updatedOrder,
+                product: {
+                    ...order.product,
+                    quantity: order.product.quantity
+                }
+            } as ApiOrder);
+            
+            setOrders(orders.map(o => o._id === mappedOrder._id ? mappedOrder : o));
             setEditingOrder(null);
             setEditingProduct(null);
             setError(null);
-        } catch (err) {
-            setError('Failed to update order');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to update order';
+            toast.error(message);
+            setError(message);
         }
     }
 
-    function handleEditClick(order: Order) {
+    function handleEditClick(order: AdminOrder) {
         setEditingOrder(order);
-        setEditingProduct(order.product as unknown as Product);
+        setEditingProduct(order.product as unknown as AdminProduct);
     }
 
     async function handleAddOrder(e: React.FormEvent) {
@@ -199,13 +295,22 @@ export default function AdminOrders() {
         try {
             setError(null);
             const createdOrder = await createOrder(newOrder);
-            const processedOrder = ensureOrderPrice(createdOrder);
-            setOrders([processedOrder, ...orders]);
+            const mappedOrder = mapApiOrderToAdminOrder({
+                ...createdOrder,
+                product: {
+                    ...createdOrder.product,
+                    quantity: newOrder.product.quantity
+                }
+            } as ApiOrder);
+            
+            setOrders([mappedOrder, ...orders]);
             setIsAddingOrder(false);
             setSelectedProductId('');
             setNewOrder(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create order');
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to add order';
+            toast.error(message);
+            setError(message);
         }
     }
 
@@ -234,44 +339,42 @@ export default function AdminOrders() {
         }
     }
 
-    function filterOrders(orders: Order[]): Order[] {
+    function filterOrders(orders: AdminOrder[]): AdminOrder[] {
         return orders.filter(order => {
-            const matchesQuery = searchFilters.query.toLowerCase().trim() === '' || 
-                order.fullName.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
-                order.phoneNumber.includes(searchFilters.query) ||
-                order.product.name.toLowerCase().includes(searchFilters.query.toLowerCase());
+            try {
+                const matchesQuery = searchFilters.query.toLowerCase().trim() === '' ||
+                    order.fullName.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
+                    order.phoneNumber.includes(searchFilters.query) ||
+                    order.product.name.toLowerCase().includes(searchFilters.query.toLowerCase());
 
-            const matchesStatus = searchFilters.status === '' || order.status === searchFilters.status;
-            const matchesState = searchFilters.state === '' || order.state === searchFilters.state;
+                const matchesStatus = searchFilters.status === '' || order.status === searchFilters.status;
+                const matchesState = searchFilters.state === '' || order.state === searchFilters.state;
 
-            let matchesDate = true;
-            const orderDate = new Date(order.createdAt);
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const lastWeek = new Date(today);
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            const lastMonth = new Date(today);
-            lastMonth.setMonth(lastMonth.getMonth() - 1);
+                let matchesDate = true;
+                if (searchFilters.dateRange !== 'all') {
+                    const orderDate = new Date(order.createdAt);
+                    const now = new Date();
+                    const daysDiff = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
 
-            switch (searchFilters.dateRange) {
-                case 'today':
-                    matchesDate = orderDate.toDateString() === today.toDateString();
-                    break;
-                case 'yesterday':
-                    matchesDate = orderDate.toDateString() === yesterday.toDateString();
-                    break;
-                case 'lastWeek':
-                    matchesDate = orderDate >= lastWeek;
-                    break;
-                case 'lastMonth':
-                    matchesDate = orderDate >= lastMonth;
-                    break;
-                default:
-                    matchesDate = true;
+                    switch (searchFilters.dateRange) {
+                        case 'today':
+                            matchesDate = daysDiff === 0;
+                            break;
+                        case 'week':
+                            matchesDate = daysDiff <= 7;
+                            break;
+                        case 'month':
+                            matchesDate = daysDiff <= 30;
+                            break;
+                    }
+                }
+
+                return matchesQuery && matchesStatus && matchesState && matchesDate;
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'Error filtering orders';
+                toast.error(message);
+                return false;
             }
-
-            return matchesQuery && matchesStatus && matchesState && matchesDate;
         });
     }
 
@@ -393,8 +496,8 @@ export default function AdminOrders() {
                                 </tr>
                             ) : (
                                 filterOrders(orders).map(order => {
-                                    const deliveryPrice = calculateDeliveryPrice(order.state, order.delivery);
-                                    const totalPrice = calculateTotalPrice(order.product.price, order.state, order.delivery);
+                                    const _deliveryPrice = calculateDeliveryPrice(order.state, order.delivery);
+                                    const _totalPrice = calculateTotalPrice(order.product.price, order.state, order.delivery);
                                     
                                     return (
                                         <tr key={order._id}>
@@ -470,9 +573,9 @@ export default function AdminOrders() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                {calculateDeliveryPrice(order.state, order.delivery) !== null && (
+                                                {_deliveryPrice !== null && (
                                                     <div>
-                                                        Delivery: {formatPrice(calculateDeliveryPrice(order.state, order.delivery))}
+                                                        Delivery: {formatPrice(_deliveryPrice)}
                                                     </div>
                                                 )}
                                                 <div className={styles.total}>
@@ -483,7 +586,7 @@ export default function AdminOrders() {
                                                         order.product?.soldPrice
                                                     ))}
                                                 </div>
-                                                {calculateDeliveryPrice(order.state, order.delivery) === null && (
+                                                {_deliveryPrice === null && (
                                                     <div className={styles.warning}>
                                                         Delivery not available
                                                     </div>
@@ -544,8 +647,11 @@ export default function AdminOrders() {
                         <h2>Add New Order</h2>
                         <form onSubmit={handleAddOrder}>
                             <div className={styles.formGroup}>
-                                <label>Select Product</label>
-                                <div className={styles.customSelect}>
+                                <label htmlFor="product-select">Select Product</label>
+                                <div 
+                                    id="product-select"
+                                    className={styles.customSelect}
+                                >
                                     <div 
                                         className={styles.selectedProduct}
                                         onClick={() => setIsProductDropdownOpen(!isProductDropdownOpen)}
@@ -598,67 +704,9 @@ export default function AdminOrders() {
                             {selectedProductId && newOrder && (
                                 <>
                                     <div className={styles.formGroup}>
-                                        <label>Product Variant</label>
-                                        <div className={styles.variantDropdowns}>
-                                            <div className={styles.variantGroup}>
-                                                <label>Size</label>
-                                                <select
-                                                    value={newOrder.size}
-                                                    onChange={(e) => {
-                                                        const newSize = e.target.value;
-                                                        const product = products.find(p => p._id === selectedProductId);
-                                                        if (!product) return;
-
-                                                        // Find available colors for this size
-                                                        const availableColors = product.variants
-                                                            .filter((v: ProductVariant) => v.size === newSize && v.quantity > 0)
-                                                            .map((v: ProductVariant) => v.color);
-                                                        
-                                                        setNewOrder({
-                                                            ...newOrder,
-                                                            size: newSize,
-                                                            // Keep current color if available, otherwise use first available color
-                                                            color: availableColors.includes(newOrder.color) ? 
-                                                                newOrder.color : availableColors[0]
-                                                        });
-                                                    }}
-                                                    required
-                                                >
-                                                    {Array.from(new Set(
-                                                        products.find(p => p._id === selectedProductId)?.variants
-                                                            .filter(v => v.quantity > 0)
-                                                            .map(v => v.size)
-                                                    )).map(size => (
-                                                        <option key={size} value={size}>{size}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className={styles.variantGroup}>
-                                                <label>Color</label>
-                                                <select
-                                                    value={newOrder.color}
-                                                    onChange={(e) => {
-                                                        setNewOrder({
-                                                            ...newOrder,
-                                                            color: e.target.value
-                                                        });
-                                                    }}
-                                                    required
-                                                >
-                                                    {products.find(p => p._id === selectedProductId)?.variants
-                                                        .filter(v => v.size === newOrder.size && v.quantity > 0)
-                                                        .map(v => (
-                                                            <option key={v.color} value={v.color}>
-                                                                {v.color} ({v.quantity} in stock)
-                                                            </option>
-                                                        ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Customer Name</label>
+                                        <label htmlFor="customer-name">Customer Name</label>
                                         <input
+                                            id="customer-name"
                                             type="text"
                                             value={newOrder.fullName}
                                             onChange={(e) => setNewOrder({
@@ -669,8 +717,9 @@ export default function AdminOrders() {
                                         />
                                     </div>
                                     <div className={styles.formGroup}>
-                                        <label>Phone Number</label>
+                                        <label htmlFor="phone-number">Phone Number</label>
                                         <input
+                                            id="phone-number"
                                             type="text"
                                             value={newOrder.phoneNumber}
                                             onChange={(e) => setNewOrder({
@@ -681,8 +730,9 @@ export default function AdminOrders() {
                                         />
                                     </div>
                                     <div className={styles.formGroup}>
-                                        <label>State (Wilaya)</label>
+                                        <label htmlFor="state-select">State (Wilaya)</label>
                                         <select
+                                            id="state-select"
                                             value={newOrder.state}
                                             onChange={(e) => {
                                                 const newState = e.target.value;
@@ -706,8 +756,9 @@ export default function AdminOrders() {
                                         </select>
                                     </div>
                                     <div className={styles.formGroup}>
-                                        <label>Region (Area/District)</label>
+                                        <label htmlFor="region-input">Region (Area/District)</label>
                                         <input
+                                            id="region-input"
                                             type="text"
                                             value={newOrder.region}
                                             onChange={(e) => setNewOrder({
@@ -719,8 +770,8 @@ export default function AdminOrders() {
                                         />
                                     </div>
                                     <div className={styles.formGroup}>
-                                        <label>Delivery Type</label>
-                                        <div className={styles.deliveryOptions}>
+                                        <label htmlFor="delivery-type">Delivery Type</label>
+                                        <div id="delivery-type" className={styles.deliveryOptions}>
                                             {getAvailableDeliveryTypes(newOrder.state).length > 0 ? (
                                                 <>
                                                     {getAvailableDeliveryTypes(newOrder.state).map(type => (
@@ -755,18 +806,26 @@ export default function AdminOrders() {
                                             <span>Product Price:</span>
                                             <span>{formatPrice(newOrder.product.price)}</span>
                                         </div>
-                                        {calculateDeliveryPrice(newOrder.state, newOrder.delivery) !== null && (
-                                            <div className={styles.priceRow}>
-                                                <span>Delivery Price:</span>
-                                                <span>{formatPrice(calculateDeliveryPrice(newOrder.state, newOrder.delivery))}</span>
-                                            </div>
-                                        )}
-                                        {calculateTotalPrice(newOrder.product.price, newOrder.state, newOrder.delivery) !== null && (
-                                            <div className={`${styles.priceRow} ${styles.total}`}>
-                                                <span>Total Price:</span>
-                                                <span>{formatPrice(calculateTotalPrice(newOrder.product.price, newOrder.state, newOrder.delivery))}</span>
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const deliveryPrice = calculateDeliveryPrice(newOrder.state, newOrder.delivery);
+                                            const totalPrice = calculateTotalPrice(newOrder.product.price, newOrder.state, newOrder.delivery);
+                                            return (
+                                                <>
+                                                    {deliveryPrice !== null && (
+                                                        <div className={styles.priceRow}>
+                                                            <span>Delivery Price:</span>
+                                                            <span>{formatPrice(deliveryPrice)}</span>
+                                                        </div>
+                                                    )}
+                                                    {totalPrice !== null && (
+                                                        <div className={`${styles.priceRow} ${styles.total}`}>
+                                                            <span>Total Price:</span>
+                                                            <span>{formatPrice(totalPrice)}</span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </>
                             )}
@@ -800,8 +859,8 @@ export default function AdminOrders() {
                         }}>
                             {/* Product Info Display */}
                             <div className={styles.formGroup}>
-                                <label>Product Details</label>
-                                <div className={styles.productInfo}>
+                                <label htmlFor="product-details">Product Details</label>
+                                <div id="product-details" className={styles.productInfo}>
                                     <img 
                                         src={editingProduct.links?.find(l => l.type === 'image')?.url || ''} 
                                         alt={editingProduct.name}
@@ -812,65 +871,63 @@ export default function AdminOrders() {
 
                             {/* Size and Color Selection */}
                             <div className={styles.formGroup}>
-                                <label>Product Variant</label>
-                                <div className={styles.variantDropdowns}>
-                                    <div className={styles.variantGroup}>
-                                        <label>Size</label>
-                                        <select
-                                            value={editingOrder.size}
-                                            onChange={(e) => {
-                                                const newSize = e.target.value;
-                                                // Find available colors for this size
-                                                const availableColors = editingProduct.variants
-                                                    .filter((v: ProductVariant) => v.size === newSize && v.quantity > 0)
-                                                    .map((v: ProductVariant) => v.color);
-                                                
-                                                setEditingOrder({
-                                                    ...editingOrder,
-                                                    size: newSize,
-                                                    // Keep current color if available, otherwise use first available color
-                                                    color: availableColors.includes(editingOrder.color) ? 
-                                                        editingOrder.color : availableColors[0]
-                                                });
-                                            }}
-                                            required
-                                        >
-                                            {Array.from(new Set(
-                                                editingProduct.variants
-                                                    .filter(v => v.quantity > 0)
-                                                    .map(v => v.size)
-                                            )).map(size => (
-                                                <option key={size} value={size}>{size}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className={styles.variantGroup}>
-                                        <label>Color</label>
-                                        <select
-                                            value={editingOrder.color}
-                                            onChange={(e) => {
-                                                setEditingOrder({
-                                                    ...editingOrder,
-                                                    color: e.target.value
-                                                });
-                                            }}
-                                            required
-                                        >
-                                                    {editingProduct.variants
-                                                        .filter(v => v.size === editingOrder.size && v.quantity > 0)
-                                                        .map(v => (
-                                                            <option key={v.color} value={v.color}>
-                                                                {v.color} ({v.quantity} in stock)
-                                                            </option>
-                                                        ))}
-                                                </select>
-                                    </div>
-                                </div>
+                                <label htmlFor="edit-product-size">Size</label>
+                                <select
+                                    id="edit-product-size"
+                                    value={editingOrder.size}
+                                    onChange={(e) => {
+                                        const newSize = e.target.value;
+                                        // Find available colors for this size
+                                        const availableColors = editingProduct.variants
+                                            .filter((v: AdminProductVariant) => v.size === newSize && v.quantity > 0)
+                                            .map((v: AdminProductVariant) => v.color);
+                                        
+                                        setEditingOrder({
+                                            ...editingOrder,
+                                            size: newSize,
+                                            // Keep current color if available, otherwise use first available color
+                                            color: availableColors.includes(editingOrder.color) ? 
+                                                editingOrder.color : availableColors[0]
+                                        });
+                                    }}
+                                    required
+                                >
+                                    {Array.from(new Set(
+                                        editingProduct.variants
+                                            .filter(v => v.quantity > 0)
+                                            .map(v => v.size)
+                                    )).map(size => (
+                                        <option key={size} value={size}>{size}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className={styles.variantGroup}>
+                                <label htmlFor="edit-product-color">Color</label>
+                                <select
+                                    id="edit-product-color"
+                                    value={editingOrder.color}
+                                    onChange={(e) => {
+                                        setEditingOrder({
+                                            ...editingOrder,
+                                            color: e.target.value
+                                        });
+                                    }}
+                                    required
+                                >
+                                    {editingProduct.variants
+                                        .filter(v => v.size === editingOrder.size && v.quantity > 0)
+                                        .map(v => (
+                                            <option key={v.color} value={v.color}>
+                                                {v.color} ({v.quantity} in stock)
+                                            </option>
+                                        ))}
+                                </select>
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Customer Name</label>
+                                <label htmlFor="customer-name">Customer Name</label>
                                 <input
+                                    id="customer-name"
                                     type="text"
                                     value={editingOrder.fullName}
                                     onChange={(e) => setEditingOrder({
@@ -881,8 +938,9 @@ export default function AdminOrders() {
                                 />
                             </div>
                             <div className={styles.formGroup}>
-                                <label>Phone Number</label>
+                                <label htmlFor="phone-number">Phone Number</label>
                                 <input
+                                    id="phone-number"
                                     type="text"
                                     value={editingOrder.phoneNumber}
                                     onChange={(e) => setEditingOrder({
@@ -893,8 +951,9 @@ export default function AdminOrders() {
                                 />
                             </div>
                             <div className={styles.formGroup}>
-                                <label>Region (Area/District)</label>
+                                <label htmlFor="edit-region">Region (Area/District)</label>
                                 <input
+                                    id="edit-region"
                                     type="text"
                                     value={editingOrder.region}
                                     onChange={(e) => setEditingOrder({
@@ -905,8 +964,9 @@ export default function AdminOrders() {
                                 />
                             </div>
                             <div className={styles.formGroup}>
-                                <label>State (Wilaya)</label>
+                                <label htmlFor="state-select">State (Wilaya)</label>
                                 <select
+                                    id="state-select"
                                     value={editingOrder.state}
                                     onChange={(e) => {
                                         const newState = e.target.value;
@@ -944,26 +1004,33 @@ export default function AdminOrders() {
                                         )}
                                     </span>
                                 </div>
-                                {calculateDeliveryPrice(editingOrder.state, editingOrder.delivery) !== null && (
-                                    <div className={styles.priceRow}>
-                                        <span>Delivery Price:</span>
-                                        <span>{formatPrice(calculateDeliveryPrice(editingOrder.state, editingOrder.delivery))}</span>
-                                    </div>
-                                )}
-                                <div className={`${styles.priceRow} ${styles.total}`}>
-                                    <span>Total Price:</span>
-                                    <span>{formatPrice(calculateTotalWithFallback(
-                                        editingOrder.product.price,
-                                        editingOrder.state,
-                                        editingOrder.delivery,
-                                        editingOrder.product.soldPrice
-                                    ))}</span>
-                                </div>
-                                {calculateDeliveryPrice(editingOrder.state, editingOrder.delivery) === null && (
-                                    <div className={styles.warning}>
-                                        Delivery not available in this state
-                                    </div>
-                                )}
+                                {(() => {
+                                    const deliveryPrice = calculateDeliveryPrice(editingOrder.state, editingOrder.delivery);
+                                    return (
+                                        <>
+                                            {deliveryPrice !== null && (
+                                                <div className={styles.priceRow}>
+                                                    <span>Delivery Price:</span>
+                                                    <span>{formatPrice(deliveryPrice)}</span>
+                                                </div>
+                                            )}
+                                            <div className={`${styles.priceRow} ${styles.total}`}>
+                                                <span>Total Price:</span>
+                                                <span>{formatPrice(calculateTotalWithFallback(
+                                                    editingOrder.product.price,
+                                                    editingOrder.state,
+                                                    editingOrder.delivery,
+                                                    editingOrder.product.soldPrice
+                                                ))}</span>
+                                            </div>
+                                            {deliveryPrice === null && (
+                                                <div className={styles.warning}>
+                                                    Delivery not available in this state
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
                             <div className={styles.modalActions}>
                                 <button type="submit" className={styles.saveButton}>

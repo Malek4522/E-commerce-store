@@ -1,5 +1,4 @@
 import type { MetaFunction } from '@remix-run/react';
-import React from 'react';
 import styles from './route.module.scss';
 
 export default function OrderingPolicyPage() {

@@ -31,7 +31,7 @@ export const CategoryFilter = ({ value = [], onChange }: CategoryFilterProps) =>
                         key={category.id}
                         label={category.name}
                         checked={value.includes(category.id)}
-                        onChange={(checked) => handleChange(category.id, checked)}
+                        onChange={(e) => handleChange(category.id, e.target.checked)}
                     />
                 ))}
             </div>

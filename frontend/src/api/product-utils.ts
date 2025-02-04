@@ -1,4 +1,4 @@
-import { ProductSortBy, ProductFilter, ProductFilters } from './types';
+import type { ProductSortBy, ProductFilters } from './product-filters';
 
 export const SORT_BY_SEARCH_PARAM = 'sort';
 

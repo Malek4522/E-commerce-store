@@ -75,141 +75,74 @@ export interface Category {
     type?: string;
 }
 
-export interface Image {
-    url: string;
-    altText?: string;
-}
-
-export interface Price {
-    amount: number;
-    formattedAmount: string;
-}
-
-export interface CartItemOption {
-    name: string;
-    value: string;
-}
-
-export interface CartItem {
+// Order types
+export interface Order {
     id: string;
-    productId: string;
+    createdAt: string;
+    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    items: OrderItem[];
+    priceSummary: {
+        subtotal: { amount: number; formattedAmount: string };
+        shipping: { amount: number; formattedAmount: string };
+        tax: { amount: number; formattedAmount: string };
+        total: { amount: number; formattedAmount: string };
+    };
+    shippingInfo: {
+        contact: ContactDetails;
+        address: Address;
+        deliveryTime?: string;
+    };
+    billingInfo: {
+        contact: ContactDetails;
+        address: Address;
+    };
+    buyerNote?: string;
+}
+
+export interface OrderItem {
+    id: string;
     productName: string;
     quantity: number;
-    image?: Image;
-    price: Price;
-    fullPrice?: Price;
-    options?: CartItemOption[];
-    isAvailable: boolean;
+    price: {
+        amount: number;
+        formattedAmount: string;
+    };
+    image?: {
+        url: string;
+        altText?: string;
+    };
+    options?: {
+        name: string;
+        value: string;
+    }[];
 }
 
-export interface Cart {
-    id: string;
-    items: CartItem[];
-    subtotal: number;
-    total: number;
-    tax: number;
-}
-
-// Order types
-export interface Address {
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    state?: string;
-    postalCode: string;
-    country: string;
+export interface CustomerInfo {
+    shippingInfo: {
+        contact: ContactDetails;
+        address: Address;
+        deliveryTime?: string;
+    };
+    billingInfo: {
+        contact: ContactDetails;
+        address: Address;
+    };
+    buyerNote?: string;
 }
 
 export interface ContactDetails {
     firstName: string;
     lastName: string;
-    phone?: string;
-    email?: string;
-}
-
-export interface OrderItem {
-    id: string;
-    productId: string;
-    productName: string;
-    quantity: number;
-    image?: Image;
-    price: Price;
-    options?: CartItemOption[];
-}
-
-export interface PriceSummary {
-    subtotal: Price;
-    shipping: Price;
-    tax: Price;
-    total: Price;
-}
-
-export interface ShippingInfo {
-    address: Address;
-    contact: ContactDetails;
-    deliveryTime?: string;
-}
-
-export interface BillingInfo {
-    address: Address;
-    contact: ContactDetails;
-}
-
-export interface Order {
-    id: string;
-    items: OrderItem[];
-    priceSummary: PriceSummary;
-    shippingInfo: ShippingInfo;
-    billingInfo: BillingInfo;
-    buyerNote?: string;
-    status: 'pending' | 'processing' | 'completed' | 'cancelled';
-    createdAt: string;
-}
-
-export interface CustomerInfo {
     email: string;
-    firstName: string;
-    lastName: string;
-    address1: string;
-    address2?: string;
+    phone?: string;
+}
+
+export interface Address {
+    addressLine1: string;
+    addressLine2?: string;
     city: string;
-    state: string;
     postalCode: string;
     country: string;
-    phone?: string;
-}
-
-export interface User {
-    id: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-}
-
-export interface AuthResponse {
-    token: string;
-    user: User;
-}
-
-// Product sorting and filtering
-export enum ProductSortBy {
-    NAME_ASC = 'name_asc',
-    NAME_DESC = 'name_desc',
-    PRICE_ASC = 'price_asc',
-    PRICE_DESC = 'price_desc',
-}
-
-export enum ProductFilter {
-    minPrice = 'minPrice',
-    maxPrice = 'maxPrice',
-    search = 'search',
-}
-
-export interface ProductFilters {
-    price?: { min: number; max: number };
-    categories?: string[];
-    search?: string;
 }
 
 // API Client interface
@@ -227,23 +160,9 @@ export interface ApiClient {
     // Categories
     getCategories(): Promise<Category[]>;
     getCategoryBySlug(slug: string): Promise<Category | null>;
-    
-    // Cart
-    getCart(): Promise<Cart | undefined>;
-    addToCart(productId: string, quantity: number): Promise<Cart>;
-    updateCartItem(itemId: string, quantity: number): Promise<Cart>;
-    removeFromCart(itemId: string): Promise<Cart>;
-    
+
     // Orders
-    createOrder(items: OrderItem[], customerInfo: CustomerInfo): Promise<Order>;
+    getOrders(): Promise<{ items: Order[]; total: number }>;
     getOrder(id: string, email: string): Promise<Order | undefined>;
-    
-    // Auth
-    login(email: string, password: string): Promise<AuthResponse>;
-    logout(): Promise<void>;
-    register(email: string, password: string, data?: Partial<User>): Promise<AuthResponse>;
-    getCurrentUser(): Promise<User | undefined>;
-    updateUser(userData: Partial<User>): Promise<User>;
-    forgotPassword(email: string): Promise<void>;
-    resetPassword(token: string, newPassword: string): Promise<void>;
+    createOrder(items: OrderItem[], customerInfo: CustomerInfo): Promise<Order>;
 } 

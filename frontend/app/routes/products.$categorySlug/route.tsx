@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from '@remix-run/node';
 import { type MetaFunction, useLoaderData } from '@remix-run/react';
 import classNames from 'classnames';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AppliedProductFilters } from '~/src/components/applied-product-filters/applied-product-filters';
 import { Breadcrumbs } from '~/src/components/breadcrumbs/breadcrumbs';
 import { RouteBreadcrumbs, useBreadcrumbs } from '~/src/components/breadcrumbs/use-breadcrumbs';
@@ -10,10 +10,9 @@ import { ProductGrid } from '~/src/components/product-grid/product-grid';
 import { ProductSortingSelect } from '~/src/components/product-sorting-select/product-sorting-select';
 import { toast } from '~/src/components/toast/toast';
 import { initializeApiForRequest } from '~/src/api/session';
-import { Category, Product, ProductFilters, ProductSortBy } from '~/src/api/types';
+import { Category, Product } from '~/src/api/types';
 import { getErrorMessage } from '~/src/utils';
 import { useFilters } from '~/src/hooks/use-filters';
-import { useSorting } from '~/src/hooks/use-sorting';
 
 import styles from './route.module.scss';
 
@@ -29,42 +28,37 @@ interface LoaderData {
 }
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-    const url = new URL(request.url);
-    const { categorySlug } = params;
+    const { api } = await initializeApiForRequest(request);
 
+    const categories: Category[] = [
+        { id: 'all-products', name: 'All Products', slug: 'all-products', description: 'Browse all our products' },
+        { id: 'jumpsuit', name: 'Jumpsuit', slug: 'jumpsuit', description: 'Browse our jumpsuit collection', type: 'Jumpsuit' },
+        { id: 'robe', name: 'Robe', slug: 'robe', description: 'Browse our robe collection', type: 'Robe' },
+        { id: 'jupe', name: 'Jupe', slug: 'jupe', description: 'Browse our jupe collection', type: 'Jupe' },
+        { id: 'new-in', name: 'New In', slug: 'new-in', description: 'Browse our latest arrivals' },
+        { id: 'sale', name: 'Sale', slug: 'sale', description: 'Browse our sale items' }
+    ];
+
+    const categorySlug = params.categorySlug;
     if (!categorySlug) {
         throw new Response('Bad Request', { status: 400 });
     }
 
-    const { api } = await initializeApiForRequest(request);
-    let category;
-    let products;
-    let categories;
-
-    // Define available categories based on product types (matching backend enum)
-    categories = [
-        { id: 'all-products', name: 'All Products', slug: 'all-products', description: 'Browse all our products' },
-        { id: 'jumpsuit', name: 'Jumpsuit', slug: 'jumpsuit', description: 'Browse our jumpsuit collection', type: 'Jumpsuit' },
-        { id: 'rope', name: 'Rope', slug: 'rope', description: 'Browse our rope collection', type: 'Rope' },
-        { id: 'jupe', name: 'Jupe', slug: 'jupe', description: 'Browse our jupe collection', type: 'Jupe' },
-        { id: 'new', name: 'New', slug: 'new', description: 'Browse our new arrivals' },
-        { id: 'sale', name: 'Sale', slug: 'sale', description: 'Browse our sale items' }
-    ];
-
-    // Find the selected category
-    category = categories.find(cat => cat.slug === categorySlug);
+    const category = categories.find(c => c.slug === categorySlug);
     if (!category) {
-        throw new Response('Category Not Found', { status: 404 });
+        throw new Response('Category not found', { status: 404 });
     }
+
+    let products: Product[] = [];
 
     try {
         // Get products based on category
-        const response = await api.getProducts(
-            category.slug === 'all-products' 
-                ? {} 
-                : { type: category.type }
-        ).catch(error => {
-            throw error;
+        const searchParams = new URLSearchParams(new URL(request.url).search);
+        const response = await api.getProducts({
+            type: category.slug === 'all-products' ? undefined : (category as any).type,
+            search: searchParams.get('search') || undefined,
+            page: Number(searchParams.get('page')) || 1,
+            limit: 12
         });
 
         if (!response || !response.items) {
@@ -99,6 +93,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
             priceRange
         });
     } catch (error) {
+        toast.error('Error loading products: ' + (error instanceof Error ? error.message : 'Unknown error'));
         throw new Response(
             error instanceof Error ? error.message : 'Failed to load products',
             { 
@@ -134,8 +129,6 @@ export default function ProductsRoute() {
     const [currentPage, setCurrentPage] = useState(1);
 
     const { filters, someFiltersApplied, clearFilter, clearAllFilters } = useFilters();
-    const { sorting } = useSorting();
-
     const breadcrumbs = useBreadcrumbs();
 
     useEffect(() => {
@@ -144,7 +137,7 @@ export default function ProductsRoute() {
                 let url = `${import.meta.env.VITE_API_URL}/product`;
                 if (category.slug === 'new-in') {
                     url = `${import.meta.env.VITE_API_URL}/product/new`;
-                } else if (category.slug === 'sold') {
+                } else if (category.slug === 'sale') {
                     url = `${import.meta.env.VITE_API_URL}/product/sale`;
                 } else {
                     url = `${import.meta.env.VITE_API_URL}/product/${category.slug}`;
@@ -198,9 +191,9 @@ export default function ProductsRoute() {
         };
         
         fetchProducts();
-    }, [category.slug]);
+    }, [category]);
 
-    const loadMoreProducts = async () => {
+    const loadMoreProducts = useCallback(async () => {
         try {
             setIsLoadingMore(true);
             const nextPage = currentPage + 1;
@@ -218,7 +211,7 @@ export default function ProductsRoute() {
         } finally {
             setIsLoadingMore(false);
         }
-    };
+    }, [currentPage, category.id, filters, products]);
 
     return (
         <div className={styles.page}>
@@ -269,7 +262,7 @@ export default function ProductsRoute() {
 
                     <div className={styles.countAndSorting}>
                         <p className={styles.productsCount}>
-                            {totalProducts} {totalProducts === 1 ? 'product' : 'products'}
+                            {products.length} {products.length === 1 ? 'product' : 'products'}
                         </p>
 
                         <ProductSortingSelect />

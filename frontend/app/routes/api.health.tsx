@@ -20,7 +20,7 @@ export const loader: LoaderFunction = async () => {
     // You could add additional checks here
     // For example, checking if your API is reachable
     return json(healthcheck);
-  } catch (error) {
+  } catch {
     healthcheck.status = 'ERROR';
     return json(healthcheck, { status: 503 });
   }

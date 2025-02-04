@@ -1,5 +1,6 @@
-import { useEffect, useRef, type FC, type HTMLAttributes } from 'react';
+import { useEffect, useRef, type HTMLAttributes } from 'react';
 import { clamp, lerp, remap } from './common';
+import styles from './background-parallax.module.scss';
 
 export interface BackgroundParallaxProps extends HTMLAttributes<HTMLDivElement> {
     /**
@@ -8,11 +9,33 @@ export interface BackgroundParallaxProps extends HTMLAttributes<HTMLDivElement> 
      * - 0: No parallax effect, the background scrolls at the same rate as the
      *   content, similar to `background-attachment: scroll`.
      * - 1: Maximum parallax effect, the background remains fixed relative to
-     *   the viewport, similar to `background-attachment: fixed`.
+     *   viewport, similar to `background-attachment: fixed`.
      */
     parallaxStrength?: number;
     /** @format media-url */
-    backgroundImageUrl?: string;
+    _backgroundImageUrl?: string;
+    _style?: React.CSSProperties;
+}
+
+interface CalculateBackgroundParallaxParams {
+    viewportHeight: number;
+    elementTop: number;
+    elementHeight: number;
+    parallaxStrength: number;
+}
+
+function calculateBackgroundParallax({
+    viewportHeight,
+    elementTop,
+    elementHeight,
+    parallaxStrength
+}: CalculateBackgroundParallaxParams): number {
+    const scrollProgress = clamp(
+        remap(elementTop, viewportHeight, -elementHeight, 0, 1),
+        0,
+        1
+    );
+    return lerp(0, elementHeight * parallaxStrength, scrollProgress);
 }
 
 /**
@@ -22,12 +45,11 @@ export interface BackgroundParallaxProps extends HTMLAttributes<HTMLDivElement> 
  * visible area of the container at all times, with no gaps, regardless of the
  * container size, background image dimensions, or viewport size.
  */
-export const BackgroundParallax: FC<BackgroundParallaxProps> = ({
-    parallaxStrength = 0.75,
-    backgroundImageUrl,
-    style,
+export function BackgroundParallax({
+    _backgroundImageUrl,
+    _style,
     ...props
-}) => {
+}: BackgroundParallaxProps) {
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -40,7 +62,7 @@ export const BackgroundParallax: FC<BackgroundParallaxProps> = ({
                 viewportHeight: window.innerHeight,
                 elementTop: elementRect.top,
                 elementHeight: elementRect.height,
-                parallaxStrength,
+                parallaxStrength: props.parallaxStrength || 0.75,
             });
             element.style.backgroundPositionY = backgroundPositionY + 'px';
         };
@@ -55,46 +77,17 @@ export const BackgroundParallax: FC<BackgroundParallaxProps> = ({
             window.removeEventListener('resize', handleLayoutChange);
             resizeObserver.disconnect();
         };
-    }, [parallaxStrength]);
+    }, [props.parallaxStrength]);
 
-    return null;
-};
+    return (
+        <div className={styles.root}>
+            <div className={styles.content}>
+                <div className={styles.contentInner} />
+            </div>
+        </div>
+    );
+}
 
 /**
- * Calculates the `background-position-y` of an element to create a parallax
- * effect as the page is scrolled. The function expects the background image to
- * have `background-attachment: fixed` and `background-size: cover`, which
- * ensures the background image has a minimum height of 100vh and is positioned
- * relative to the viewport rather than the element itself.
- *
- * @param viewportHeight - The height of the viewport in pixels.
- * @param elementHeight - The height of the element in pixels.
- * @param elementTop - The distance from the top of the viewport to the top of the element.
- * @param parallaxStrength - A value between 0 and 1, where 0 means no parallax,
- *                           and 1 means full parallax (background fixed to viewport).
- * @return The `y` position of the background in pixels to achieve the parallax effect.
+ * Calculates the `background-position-y` value based on scroll position
  */
-const calculateBackgroundParallax = ({
-    viewportHeight,
-    elementHeight,
-    elementTop,
-    parallaxStrength,
-}: {
-    viewportHeight: number;
-    elementHeight: number;
-    elementTop: number;
-    parallaxStrength: number;
-}) => {
-    // scrollProgress = 0, when the element is fully below the bottom edge of the viewport.
-    // scrollProgress = 1, when the element is fully above the top edge of the viewport.
-    const scrollProgress = clamp(0, 1, remap(viewportHeight, -elementHeight, 0, 1, elementTop));
-
-    // If the element's height exceeds the viewport height, the background
-    // (which has minimum height of 100vh) cannot scroll along with the element
-    // without creating gaps. In this case, we force `parallaxStrength = 1` to
-    // keep the background fixed to the viewport.
-    if (elementHeight > viewportHeight) parallaxStrength = 1;
-
-    const maxBackgroundY = ((viewportHeight + elementHeight) / 2) * (1 - parallaxStrength);
-    return lerp(maxBackgroundY, -maxBackgroundY, scrollProgress);
-};

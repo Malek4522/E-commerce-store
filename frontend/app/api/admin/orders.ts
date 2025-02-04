@@ -1,32 +1,16 @@
 import { Order } from './types';
-import type { Product } from './types';
+import { getErrorMessage } from '~/src/api/utils';
+import { toast } from '~/src/components/toast/toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 if (!API_URL) {
-    console.error('VITE_API_URL environment variable is not set');
+    toast.error('VITE_API_URL environment variable is not set');
 }
 
 function handleAuthError(status: number) {
     if (status === 401) {
         window.location.href = '/admin/login';
     }
-}
-
-async function fetchProduct(productId: string): Promise<Product> {
-    const response = await fetch(`${API_URL}/product/${productId}`, {
-        method: 'GET',
-        credentials: 'include'
-    });
-
-    handleAuthError(response.status);
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch product');
-    }
-
-    const data = await response.json();
-    return data.data;
 }
 
 export async function getOrders(): Promise<Order[]> {
@@ -44,7 +28,7 @@ export async function getOrders(): Promise<Order[]> {
         const data = await response.json();
         return data.data;
     } catch (error) {
-        console.error('Error fetching orders:', error);
+        toast.error('Error fetching orders: ' + getErrorMessage(error));
         throw error;
     }
 }
@@ -77,7 +61,7 @@ export async function updateOrderStatus(orderId: string, statusNumber: number): 
         const data = await response.json();
         return data.data;
     } catch (error) {
-        console.error('Error updating order status:', error);
+        toast.error('Error updating order status: ' + getErrorMessage(error));
         throw error;
     }
 }
@@ -96,7 +80,7 @@ export async function deleteOrder(orderId: string): Promise<void> {
             throw new Error(error.message || 'Failed to delete order');
         }
     } catch (error) {
-        console.error('Error deleting order:', error);
+        toast.error('Error deleting order: ' + getErrorMessage(error));
         throw error;
     }
 }
@@ -122,7 +106,7 @@ export async function updateOrder(orderId: string, updates: Partial<Order>): Pro
         const data = await response.json();
         return data.data;
     } catch (error) {
-        console.error('Error updating order:', error);
+        toast.error('Error updating order: ' + getErrorMessage(error));
         throw error;
     }
 }
@@ -160,7 +144,7 @@ export async function createOrder(orderData: Omit<Order, '_id' | 'createdAt' | '
         const data = await response.json();
         return data.data;
     } catch (error) {
-        console.error('Error creating order:', error);
+        toast.error('Error creating order: ' + getErrorMessage(error));
         throw error;
     }
 } 

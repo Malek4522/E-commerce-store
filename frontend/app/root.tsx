@@ -19,13 +19,11 @@ import { Footer } from '~/src/components/footer/footer';
 import { Header } from '~/src/components/header/header';
 import { NavigationProgressBar } from '~/src/components/navigation-progress-bar/navigation-progress-bar';
 import { Toaster } from '~/src/components/toaster/toaster';
-import { CartProvider, ApiProvider } from '~/src/api';
-import { AuthProvider } from './api/auth-context';
+import { ApiProvider } from '~/src/api';
 
 import styles from './root.module.scss';
 
-export async function loader({ request }: LoaderFunctionArgs) {
-    // You might want to add your own session handling here
+export async function loader({ request: _request }: LoaderFunctionArgs) {
     return json({});
 }
 
@@ -35,7 +33,7 @@ export const handle = {
     breadcrumbs,
 };
 
-export function Layout({ children }: React.PropsWithChildren) {
+export function Layout({ children: _children }: React.PropsWithChildren) {
     return (
         <html lang="en">
             <head>
@@ -46,21 +44,17 @@ export function Layout({ children }: React.PropsWithChildren) {
             </head>
             <body>
                 <ApiProvider>
-                    <CartProvider>
-                        <AuthProvider>
-                            <div>
-                                <div className={styles.root}>
-                                    <Header />
-                                    <main className={styles.main}>
-                                        <Outlet />
-                                    </main>
-                                    <Footer />
-                                </div>
-                                <NavigationProgressBar className={styles.navigationProgressBar} />
-                                <Toaster />
-                            </div>
-                        </AuthProvider>
-                    </CartProvider>
+                    <div>
+                        <div className={styles.root}>
+                            <Header />
+                            <main className={styles.main}>
+                                {_children}
+                            </main>
+                            <Footer />
+                        </div>
+                        <NavigationProgressBar className={styles.navigationProgressBar} />
+                        <Toaster />
+                    </div>
                 </ApiProvider>
                 <ScrollRestoration />
                 <Scripts />
@@ -71,38 +65,7 @@ export function Layout({ children }: React.PropsWithChildren) {
 }
 
 export default function App() {
-    return (
-        <html lang="en">
-            <head>
-                <meta charSet="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <Meta />
-                <Links />
-            </head>
-            <body>
-                <ApiProvider >
-                    <CartProvider>
-                        <AuthProvider>
-                            <div>
-                                <div className={styles.root}>
-                                    <Header />
-                                    <main className={styles.main}>
-                                        <Outlet />
-                                    </main>
-                                    <Footer />
-                                </div>
-                                <NavigationProgressBar className={styles.navigationProgressBar} />
-                                <Toaster />
-                            </div>
-                        </AuthProvider>
-                    </CartProvider>
-                </ApiProvider>
-                <ScrollRestoration />
-                <Scripts />
-                <LiveReload />
-            </body>
-        </html>
-    );
+    return <Outlet />;
 }
 
 export const meta: MetaFunction = () => {

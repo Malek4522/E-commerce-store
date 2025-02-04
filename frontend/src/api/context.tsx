@@ -1,10 +1,10 @@
 import { createContext, useContext, ReactNode } from 'react';
-import type { ApiClient } from './types';
+import type { ApiClient, OrderItem, CustomerInfo } from './types';
 
 // Mock implementation of the API client
 const mockApiClient: ApiClient = {
     getProducts: async (params?: { page?: number; limit?: number; search?: string; type?: string }) => {
-        const { page = 1, limit = 10, search = '' } = params || {};
+        const { page: _page = 1, limit: _limit = 10, search: _search = '' } = params || {};
         return {
             items: [],
             total: 0
@@ -13,12 +13,12 @@ const mockApiClient: ApiClient = {
     getProductBySlug: async () => undefined,
     getCategories: async () => [],
     getCategoryBySlug: async () => null,
-    getCart: async () => undefined,
-    addToCart: async () => ({ id: '', items: [], subtotal: 0, total: 0, tax: 0 }),
-    updateCartItem: async () => ({ id: '', items: [], subtotal: 0, total: 0, tax: 0 }),
-    removeFromCart: async () => ({ id: '', items: [], subtotal: 0, total: 0, tax: 0 }),
-    createOrder: async () => ({
+    getOrders: async () => ({ items: [], total: 0 }),
+    getOrder: async () => undefined,
+    createOrder: async (items: OrderItem[], customerInfo: CustomerInfo) => ({
         id: '',
+        createdAt: new Date().toISOString(),
+        status: 'pending' as const,
         items: [],
         priceSummary: {
             subtotal: { amount: 0, formattedAmount: '$0' },
@@ -26,41 +26,9 @@ const mockApiClient: ApiClient = {
             tax: { amount: 0, formattedAmount: '$0' },
             total: { amount: 0, formattedAmount: '$0' }
         },
-        shippingInfo: {
-            address: {
-                addressLine1: '',
-                city: '',
-                postalCode: '',
-                country: ''
-            },
-            contact: {
-                firstName: '',
-                lastName: ''
-            }
-        },
-        billingInfo: {
-            address: {
-                addressLine1: '',
-                city: '',
-                postalCode: '',
-                country: ''
-            },
-            contact: {
-                firstName: '',
-                lastName: ''
-            }
-        },
-        status: 'pending',
-        createdAt: new Date().toISOString()
-    }),
-    getOrder: async () => undefined,
-    login: async () => ({ token: '', user: { id: '', email: '' } }),
-    logout: async () => {},
-    register: async () => ({ token: '', user: { id: '', email: '' } }),
-    getCurrentUser: async () => undefined,
-    updateUser: async () => ({ id: '', email: '' }),
-    forgotPassword: async () => {},
-    resetPassword: async () => {}
+        shippingInfo: customerInfo.shippingInfo,
+        billingInfo: customerInfo.billingInfo,
+    })
 };
 
 const ApiContext = createContext<ApiClient>(mockApiClient);

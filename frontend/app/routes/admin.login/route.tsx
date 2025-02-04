@@ -1,9 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from '@remix-run/react';
-import { useAuth } from '../../api/auth-context';
+import { AuthProvider, useAuth } from '../../api/auth-context';
 import styles from './route.module.scss';
 
 export default function AdminLogin() {
+    return (
+        <AuthProvider>
+            <AdminLoginContent />
+        </AuthProvider>
+    );
+}
+
+function AdminLoginContent() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { login } = useAuth();
