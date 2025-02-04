@@ -3,10 +3,10 @@ import { ProductSortBy } from '~/src/api/product-filters';
 import styles from './product-sorting-select.module.scss';
 
 const sortOptions = [
-    { value: ProductSortBy.NAME_ASC, label: 'Name (A-Z)' },
-    { value: ProductSortBy.NAME_DESC, label: 'Name (Z-A)' },
-    { value: ProductSortBy.PRICE_ASC, label: 'Price (Low to High)' },
-    { value: ProductSortBy.PRICE_DESC, label: 'Price (High to Low)' },
+    { value: ProductSortBy.NAME_ASC, label: 'Nom (A-Z)' },
+    { value: ProductSortBy.NAME_DESC, label: 'Nom (Z-A)' },
+    { value: ProductSortBy.PRICE_ASC, label: 'Prix (Croissant)' },
+    { value: ProductSortBy.PRICE_DESC, label: 'Prix (Décroissant)' },
 ];
 
 export interface ProductSortingSelectProps {
@@ -19,7 +19,7 @@ export function ProductSortingSelect({ className, value, onChange }: ProductSort
     return (
         <div className={classNames(styles.root, className)}>
             <label htmlFor="sort-by" className={styles.label}>
-                Sort by:
+                Trier par :
             </label>
             <select
                 id="sort-by"

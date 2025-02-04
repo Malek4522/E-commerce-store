@@ -9,7 +9,6 @@ export function ProductsHeader({ title }: ProductsHeaderProps) {
     return (
         <div className={styles.root}>
             <h1 className={styles.title}>{title}</h1>
-            <ProductSortingSelect />
         </div>
     );
 } 

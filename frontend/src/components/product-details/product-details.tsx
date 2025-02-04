@@ -87,7 +87,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
         phoneNumber: '',
         state: 'Alger',
         region: '',
-        delivery: 'home' as 'home' | 'center',
+        delivery: 'domicile' as 'home' | 'center',
         color: '',
         size: ''
     });
@@ -184,7 +184,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
         e.preventDefault();
         
         if (!orderForm.color || !orderForm.size) {
-            toast.error('Please select a size and color');
+            toast.error('Veuillez sélectionner une taille et une couleur');
             return;
         }
 
@@ -212,17 +212,17 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Failed to place order');
+                throw new Error(error.message || 'Échec de la commande');
             }
 
-            toast.success('Order placed successfully!');
+            toast.success('Commande passée avec succès !');
             setShowOrderForm(false);
             setOrderForm({
                 fullName: '',
                 phoneNumber: '',
                 state: 'Alger',
                 region: '',
-                delivery: 'home',
+                delivery: 'domicile' as 'home',
                 color: '',
                 size: ''
             });
@@ -235,7 +235,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
 
     const _handleBuyNow = () => {
         if (isOutOfStock) {
-            toast.error('Product is out of stock');
+            toast.error('Produit en rupture de stock');
             return;
         }
 
@@ -304,10 +304,10 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                     {showOrderForm && (
                         <div className={styles.modalOverlay}>
                             <div className={styles.modal}>
-                                <h2>Complete Your Order</h2>
+                                <h2>Complétez Votre Commande</h2>
                                 <form onSubmit={_handleSubmitOrder}>
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="variant-matrix">Select Variant</label>
+                                        <label htmlFor="variant-matrix">Sélectionnez une variante</label>
                                         <div id="variant-matrix" className={styles.variantMatrix}>
                                             <table>
                                                 <thead>
@@ -366,7 +366,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="fullName">Full Name</label>
+                                        <label htmlFor="fullName">Nom Complet</label>
                                         <input
                                             type="text"
                                             id="fullName"
@@ -378,7 +378,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="phoneNumber">Phone Number</label>
+                                        <label htmlFor="phoneNumber">Numéro de Téléphone</label>
                                         <input
                                             type="tel"
                                             id="phoneNumber"
@@ -390,7 +390,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="state">State</label>
+                                        <label htmlFor="state">Wilaya</label>
                                         <select
                                             id="state"
                                             name="state"
@@ -407,7 +407,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="region">Region</label>
+                                        <label htmlFor="region">Région</label>  
                                         <input
                                             type="text"
                                             id="region"
@@ -419,7 +419,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="delivery">Delivery Type</label>
+                                        <label htmlFor="delivery">Type de Livraison</label>
                                         <div id="delivery" className={styles.deliveryOptions}>
                                             <button
                                                 type="button"
@@ -431,7 +431,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                                     target: { name: 'delivery', value: 'home' }
                                                 } as any)}
                                             >
-                                                Home Delivery
+                                                Livraison à Domicile
                                             </button>
                                             <button
                                                 type="button"
@@ -443,7 +443,7 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                                     target: { name: 'delivery', value: 'center' }
                                                 } as any)}
                                             >
-                                                Center Pickup
+                                                Retrait au Centre
                                             </button>
                                         </div>
                                     </div>
@@ -456,19 +456,19 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                         </div>
                                         {deliveryPrice !== null && (
                                             <div className={styles.priceRow}>
-                                                <span>Delivery Price:</span>
+                                                <span>Prix de Livraison:</span>
                                                 <span>{formatPrice(deliveryPrice)}</span>
                                             </div>
                                         )}
                                         {totalPrice !== null && (
                                             <div className={`${styles.priceRow} ${styles.total}`}>
-                                                <span>Total Price:</span>
+                                                <span>Prix Total:</span>
                                                 <span>{formatPrice(totalPrice)}</span>
                                             </div>
                                         )}
                                         {deliveryPrice === null && (
                                             <div className={styles.warning}>
-                                                Delivery not available in this state
+                                                La livraison n'est pas disponible dans cette région
                                             </div>
                                         )}
                                     </div>
@@ -479,14 +479,14 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                                             onClick={() => setShowOrderForm(false)}
                                             className={styles.cancelButton}
                                         >
-                                            Cancel
+                                            Annuler
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={isAddingToCart}
                                             className={styles.submitButton}
                                         >
-                                            {isAddingToCart ? 'Processing...' : 'Place Order'}
+                                            {isAddingToCart ? 'Processing...' : 'Commander'}
                                         </button>
                                     </div>
                                 </form>
@@ -498,15 +498,15 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                         <Accordion
                             items={[
                                 ...(product.description ? [{
-                                    header: 'Product Info',
+                                    header: 'Informations Produit',
                                     content: <div dangerouslySetInnerHTML={{ __html: product.description }} />
                                 }] : []),
                                 {
-                                    header: 'Shipping Info',
+                                    header: 'Informations de Livraison',
                                     content: 'Le transport est assuré par ZR EXPRESS avec une durée de livraison de 2 jours en moyenne, 3 jours maximum.'
                                 },
                                 {
-                                    header: 'Return & Refund Policy',
+                                    header: 'Politique de Retour & Remboursement',
                                     content: 'Après avoir sélectionné le produit et effectué une demande de livraison, nous vous appellerons au numéro que vous avez fourni pour confirmer la commande. Vous pouvez annuler la commande à tout moment en nous appelant. Lors de la livraison, vous pouvez vérifier si le produit correspond aux photos et s\'il n\'est pas endommagé. Si vous l\'acceptez, vous payez le livreur et la transaction est terminée. Sinon, vous pouvez simplement refuser la commande. Les commandes achetées ne peuvent pas être retournées ou échangées, sauf si nous livrons des tailles ou des couleurs incorrectes. Dans ce cas, nous les remplaçons avec livraison gratuite. Sinon, vous devrez payer à nouveau les frais de livraison.'
                                 }
                             ]}

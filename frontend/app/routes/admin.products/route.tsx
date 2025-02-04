@@ -617,6 +617,33 @@ export default function AdminProductsRoute() {
     const [searchParams] = useSearchParams();
     const _navigate = useNavigate();
 
+    // Initial data load
+    useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const data = await fetchProducts();
+                setProducts(data);
+                
+                // Check for product ID in URL params
+                const productId = searchParams.get('id');
+                if (productId) {
+                    const product = data.find(p => p._id === productId);
+                    if (product) {
+                        setProductToEdit(product);
+                    }
+                }
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load products');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadInitialData();
+    }, []); // Only run once on mount
+
     // Memoize handlers to prevent unnecessary re-renders
     const handleCloseModal = useCallback(() => {
         setSelectedMedia(null);
@@ -715,46 +742,6 @@ export default function AdminProductsRoute() {
             </div>
         );
     }, [handleViewAllMedia]);
-
-    // Load products only once on mount
-    useEffect(() => {
-        let mounted = true;
-
-        const loadProducts = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const data = await fetchProducts();
-                if (mounted) {
-                    setProducts(data);
-                }
-            } catch (err) {
-                if (mounted) {
-                    setError(err instanceof Error ? err.message : 'Failed to load products');
-                }
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        loadProducts();
-
-        return () => {
-            mounted = false;
-        };
-    }, []);
-
-    useEffect(() => {
-        const productId = searchParams.get('id');
-        if (productId) {
-            const product = products.find(p => p._id === productId);
-            if (product) {
-                setProductToEdit(product);
-            }
-        }
-    }, [searchParams, products]);
 
     function filterProducts(products: Product[]): Product[] {
         return products.filter(product => {

@@ -181,7 +181,61 @@ const updateProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
     try {
-        const products = await Product.find();
+        const { search, minPrice, maxPrice, type, sortBy } = req.query;
+        
+        // Build filter object
+        const filter = {};
+        
+        // Add search filter
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Add price range filter
+        if (minPrice || maxPrice) {
+            filter.price = {};
+            if (minPrice) filter.price.$gte = Number(minPrice);
+            if (maxPrice) filter.price.$lte = Number(maxPrice);
+        }
+        
+        // Add type filter
+        if (type) {
+            filter.type = type;
+        }
+
+        // Define sort options
+        let sortOptions = {};
+        if (sortBy) {
+            switch (sortBy) {
+                case 'price_asc':
+                    sortOptions = { price: 1 };
+                    break;
+                case 'price_desc':
+                    sortOptions = { price: -1 };
+                    break;
+                case 'name_asc':
+                    sortOptions = { name: 1 };
+                    break;
+                case 'name_desc':
+                    sortOptions = { name: -1 };
+                    break;
+                case 'newest':
+                    sortOptions = { createdAt: -1 };
+                    break;
+                case 'oldest':
+                    sortOptions = { createdAt: 1 };
+                    break;
+                default:
+                    sortOptions = { createdAt: -1 }; // Default sort by newest
+            }
+        } else {
+            sortOptions = { createdAt: -1 }; // Default sort by newest
+        }
+
+        const products = await Product.find(filter).sort(sortOptions);
         res.status(200).json({ success: true, data: products });
     } catch (error) {
         res.status(500).json({
@@ -269,7 +323,7 @@ const getNewProducts = async (req, res) => {
 };
 
 // @desc    Get all products with discounted prices
-// @route   GET /api/products/sale
+// @route   GET /api/product/sale
 // @access  Public 
 const getSaleProducts = async (req, res) => {
     try {

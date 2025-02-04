@@ -20,7 +20,7 @@ export default function HomePage() {
                         Consultez notre soirée cloth
                     </h1>
                     <CategoryLink categorySlug="all-products">
-                        <LabelWithArrow>Shop Collections</LabelWithArrow>
+                        <LabelWithArrow>Voir les Collections</LabelWithArrow>
                     </CategoryLink>
                 </div>
             </div>
@@ -32,7 +32,7 @@ export default function HomePage() {
                         Collections essentielles pour une mode durable.
                     </div>
                     <CategoryLink categorySlug="all-products">
-                        <LabelWithArrow>Shop Collections</LabelWithArrow>
+                        <LabelWithArrow>Voir les Collections</LabelWithArrow>
                     </CategoryLink>
                 </FadeIn>
             </div>
@@ -58,16 +58,16 @@ export default function HomePage() {
             >
                 <FloatIn direction="up" duration={1.2} distance={120}>
                     <div className="floatingCard">
-                        <div className="floatingCardHeader">Happy Holidays</div>
+                        <div className="floatingCardHeader">Joyeuses Fêtes</div>
                         <div className="floatingCardContent">
-                            <h2 className="floatingCardTitle">The holidays sales</h2>
+                            <h2 className="floatingCardTitle">Les soldes des fêtes</h2>
                             <div className="floatingCardDescription">
-                                Special discounts on
-                                <br /> selected items
+                                Réductions spéciales sur
+                                <br /> certains articles
                             </div>
                         </div>
                         <CategoryLink categorySlug="sale">
-                            <LabelWithArrow>Shop Sales</LabelWithArrow>
+                            <LabelWithArrow>Voir les Soldes</LabelWithArrow>
                         </CategoryLink>
                     </div>
                 </FloatIn>
@@ -76,15 +76,15 @@ export default function HomePage() {
             <FeaturedProductsSection
                 className="alternateBackground"
                 categorySlug="new-in"
-                title="New In"
-                description="Embrace a sustainable lifestyle with our newest drop-ins."
+                title="Nouveautés"
+                description="Adoptez un style de vie durable avec nos dernières collections."
                 productCount={4}
             />
 
             <FeaturedProductsSection
                 categorySlug="sale"
-                title="On Sale"
-                description="Don't miss out on these amazing deals."
+                title="En Solde"
+                description="Ne manquez pas ces offres exceptionnelles."
                 productCount={4}
             />
         </div>

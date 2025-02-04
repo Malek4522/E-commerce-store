@@ -158,9 +158,31 @@ export default function AdminOrders() {
     }, []);
 
     useEffect(() => {
-        loadOrders();
-        loadProducts();
-    }, [loadOrders, loadProducts]);
+        const initialLoad = async () => {
+            setLoading(true);
+            try {
+                const [ordersData, productsData] = await Promise.all([
+                    getOrders(),
+                    getProducts()
+                ]);
+                
+                const ordersWithProducts = ordersData.map(order => mapApiOrderToAdminOrder(order));
+                const mappedProducts = productsData.map(product => mapApiProductToAdminProduct(product));
+                
+                setOrders(ordersWithProducts);
+                setProducts(mappedProducts);
+                setError(null);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'Failed to load data';
+                toast.error(message);
+                setError(message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initialLoad();
+    }, []); // Only run once on mount
 
     useEffect(() => {
         if (selectedProductId) {

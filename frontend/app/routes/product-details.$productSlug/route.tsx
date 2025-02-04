@@ -21,8 +21,8 @@ export default function ProductDetailsRoute() {
     if (error) {
         return (
             <div className={styles.errorContainer}>
-                <h1>Error</h1>
-                <p>Failed to load product details. Please try again later.</p>
+                <h1>Erreur</h1>
+                <p>Échec du chargement des détails du produit. Veuillez réessayer plus tard.</p>
             </div>
         );
     }
@@ -34,8 +34,8 @@ export default function ProductDetailsRoute() {
     if (!product) {
         return (
             <div className={styles.errorContainer}>
-                <h1>Product Not Found</h1>
-                <p>The product you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+                <h1>Produit Non Trouvé</h1>
+                <p>Le produit que vous recherchez n&apos;existe pas ou a été supprimé.</p>
             </div>
         );
     }
@@ -46,8 +46,8 @@ export default function ProductDetailsRoute() {
                 product={product}
                 canonicalUrl={`${import.meta.env.VITE_PUBLIC_URL}/product-details/${product.id}`}
                 breadcrumbs={[
-                    { title: 'Home', to: '/' },
-                    { title: 'Products', to: '/products/all-products' },
+                    { title: 'Accueil', to: '/' },
+                    { title: 'Produits', to: '/products/all-products' },
                     { title: product.name, to: `/product-details/${product.id}` }
                 ]}
             />
@@ -58,19 +58,19 @@ export default function ProductDetailsRoute() {
 export const meta: MetaFunction<typeof loader> = ({ data}) => {
     if (!data) {
         return [
-            { title: 'Product Not Found | MZ Prestige' },
+            { title: 'Produit Non Trouvé | MZ Prestige' },
             {
                 name: 'description',
-                content: 'The requested product could not be found.',
+                content: 'Le produit demandé est introuvable.',
             },
         ];
     }
 
     return [
-        { title: 'Product Details | MZ Prestige' },
+        { title: 'Détails du Produit | MZ Prestige' },
         {
             name: 'description',
-            content: 'View product details',
+            content: 'Voir les détails du produit',
         },
         {
             property: 'robots',

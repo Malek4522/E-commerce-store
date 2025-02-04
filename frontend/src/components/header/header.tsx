@@ -25,7 +25,7 @@ export const Header = ({ className }: HeaderProps) => {
                 </Link>
                 <div className={styles.div1}>
                     <Link className={styles.shopNow} to="/products/all-products">
-                        Shop Now
+                        Acheter Maintenant
                     </Link>
                 </div>
             </section>
