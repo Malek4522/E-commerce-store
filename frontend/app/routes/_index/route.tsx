@@ -66,7 +66,7 @@ export default function HomePage() {
                                 <br /> selected items
                             </div>
                         </div>
-                        <CategoryLink categorySlug="all-products">
+                        <CategoryLink categorySlug="sale">
                             <LabelWithArrow>Shop Sales</LabelWithArrow>
                         </CategoryLink>
                     </div>

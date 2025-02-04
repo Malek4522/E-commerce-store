@@ -13,6 +13,7 @@ import { initializeApiForRequest } from '~/src/api/session';
 import { Category, Product } from '~/src/api/types';
 import { getErrorMessage } from '~/src/utils';
 import { useFilters } from '~/src/hooks/use-filters';
+import { useLocalSorting } from '~/src/hooks/use-local-sorting';
 
 import styles from './route.module.scss';
 
@@ -129,6 +130,7 @@ export default function ProductsRoute() {
     const [currentPage, setCurrentPage] = useState(1);
 
     const { filters, someFiltersApplied, clearFilter, clearAllFilters } = useFilters();
+    const { sorting, setSorting, sortProducts } = useLocalSorting();
     const breadcrumbs = useBreadcrumbs();
 
     useEffect(() => {
@@ -168,30 +170,33 @@ export default function ProductsRoute() {
                         type: 'image' | 'video';
                     }>;
                 }) => ({
-                    ...product,
+                    id: product._id,
+                    name: product.name,
+                    price: {
+                        amount: product.price,
+                        formatted: `${product.price.toLocaleString()} DA`,
+                        soldPrice: product.soldPrice,
+                        soldPriceFormatted: product.soldPrice ? `${product.soldPrice.toLocaleString()} DA` : undefined
+                    },
                     images: product.links
                         .filter(link => link.type === 'image')
                         .map(link => ({
                             id: link.id,
                             url: link.url,
                             altText: product.name
-                        })),
-                    price: {
-                        amount: product.price,
-                        formatted: `${product.price.toLocaleString()} DA`,
-                        soldPrice: product.soldPrice,
-                        soldPriceFormatted: product.soldPrice ? `${product.soldPrice.toLocaleString()} DA` : undefined
-                    }
-                }));
+                        }))
+                })) as Product[];
 
-                setProducts(transformedProducts);
+                // Sort the products before setting them
+                const sortedProducts = sortProducts(transformedProducts, sorting);
+                setProducts(sortedProducts);
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : 'Failed to fetch products');
             }
         };
         
         fetchProducts();
-    }, [category]);
+    }, [category, sorting]);
 
     const loadMoreProducts = useCallback(async () => {
         try {
@@ -265,7 +270,7 @@ export default function ProductsRoute() {
                             {products.length} {products.length === 1 ? 'product' : 'products'}
                         </p>
 
-                        <ProductSortingSelect />
+                        <ProductSortingSelect value={sorting} onChange={setSorting} />
                     </div>
 
                     <ProductGrid

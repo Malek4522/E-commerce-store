@@ -84,14 +84,14 @@
 }
 
 .seeAllLinkSale {
-    color: #B8AE97;
+    color: #8C8573;  // Darker version of #DAD3C1
 
     &::before {
-        background-color: #B8AE97;
+        background-color: #8C8573;
     }
 
     &:hover {
-        color: color.adjust(#B8AE97, $lightness: -10%);
+        color: color.adjust(#8C8573, $lightness: -10%);
     }
 }
 

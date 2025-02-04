@@ -838,11 +838,17 @@ export default function AdminProductsRoute() {
                                                 <td data-label="Type">{product.type}</td>
                                                 <td data-label="Price">
                                                     <div>
-                                                        {formatPrice(product.price)}
-                                                        {product.soldPrice > 0 && (
-                                                            <div className={styles.soldPrice}>
-                                                                {formatPrice(product.soldPrice)}
-                                                            </div>
+                                                        {product.soldPrice > 0 ? (
+                                                            <>
+                                                                <div className={styles.originalPrice}>
+                                                                    {formatPrice(product.price)}
+                                                                </div>
+                                                                <div className={styles.soldPrice}>
+                                                                    {formatPrice(product.soldPrice)}
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            formatPrice(product.price)
                                                         )}
                                                     </div>
                                                 </td>

@@ -1376,9 +1376,15 @@
     }
 }
 
-.soldPrice {
-    color: #c2185b;
+.originalPrice {
+    color: #666;
     font-size: 0.9rem;
     text-decoration: line-through;
-    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.soldPrice {
+    color: #c2185b;
+    font-size: 1rem;
+    font-weight: 500;
 } 

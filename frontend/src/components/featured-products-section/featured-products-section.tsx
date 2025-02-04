@@ -54,7 +54,7 @@ export const FeaturedProductsSection = (props: FeaturedProductsSectionProps) => 
                     to={`/products/${categorySlug}`} 
                     className={classNames(
                         styles.seeAllLink,
-                        { [styles.seeAllLinkSale]: categorySlug === 'sold' }
+                        { [styles.seeAllLinkSale]: categorySlug === 'sale' }
                     )}
                 >
                     Explore All

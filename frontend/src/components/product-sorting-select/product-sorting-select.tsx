@@ -1,6 +1,5 @@
 import classNames from 'classnames';
 import { ProductSortBy } from '~/src/api/product-filters';
-import { useSorting } from '~/src/hooks/use-sorting';
 import styles from './product-sorting-select.module.scss';
 
 const sortOptions = [
@@ -12,11 +11,11 @@ const sortOptions = [
 
 export interface ProductSortingSelectProps {
     className?: string;
+    value: ProductSortBy;
+    onChange: (value: ProductSortBy) => void;
 }
 
-export function ProductSortingSelect({ className }: ProductSortingSelectProps) {
-    const { sorting, setSorting } = useSorting();
-
+export function ProductSortingSelect({ className, value, onChange }: ProductSortingSelectProps) {
     return (
         <div className={classNames(styles.root, className)}>
             <label htmlFor="sort-by" className={styles.label}>
@@ -25,8 +24,8 @@ export function ProductSortingSelect({ className }: ProductSortingSelectProps) {
             <select
                 id="sort-by"
                 className={styles.select}
-                value={sorting}
-                onChange={(e) => setSorting(e.target.value as ProductSortBy)}
+                value={value}
+                onChange={(e) => onChange(e.target.value as ProductSortBy)}
             >
                 {sortOptions.map((option) => (
                     <option key={option.value} value={option.value}>
