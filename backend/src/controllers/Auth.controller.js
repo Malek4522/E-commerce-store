@@ -38,10 +38,11 @@ const authenticate = async (req, res) => {
         const password = req.body.password;
 
         if(password === PASSWORD){
-            const accessToken= generateTokens();
+            const accessToken = generateTokens();
             setAccessTokenCookie(res, accessToken);
             return res.status(200).json({ 
                 message: 'Authentication successful',
+                accessToken: accessToken
             });
         }
 

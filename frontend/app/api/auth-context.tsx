@@ -18,6 +18,13 @@ let authCache = {
 
 const AUTH_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes
 const AUTH_CHECK_DEBOUNCE = 2000; // 2 seconds debounce
+const TOKEN_KEY = 'admin_token'; // Key for localStorage token
+
+// Helper function to get auth headers
+const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    return token ? { 'Authorization': `Bearer ${token}` } : { 'Authorization': '' };
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
@@ -42,9 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/product/admin`, {
-                credentials: 'include'
+                credentials: 'include',
+                headers: getAuthHeaders()
             });
-            
             const isValid = response.status !== 401;
             
             // Update cache
@@ -80,6 +87,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const success = response.ok;
             if (success) {
+                // Store token from response if available
+                const data = await response.json();
+                if (data.accessToken) {
+                    localStorage.setItem(TOKEN_KEY, data.accessToken);
+                }
+                
                 authCache = {
                     status: true,
                     lastCheck: Date.now()
@@ -94,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = () => {
+        localStorage.removeItem(TOKEN_KEY); // Clear stored token
         authCache = {
             status: false,
             lastCheck: Date.now()
@@ -121,6 +135,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
+            // Add auth headers to all requests
+            if (typeof args[1] === 'object') {
+                args[1] = {
+                    ...args[1],
+                    headers: {
+                        ...(args[1]?.headers || {}),
+                        ...getAuthHeaders()
+                    }
+                };
+            }
+            
             const response = await originalFetch(...args);
             await handleFetchResponse(response.clone());
             return response;
