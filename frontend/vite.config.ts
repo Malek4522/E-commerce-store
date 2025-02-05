@@ -33,6 +33,7 @@ export default defineConfig({
                 },
             },
         },
+        sourcemap: true
     },
     server: {
         hmr: {

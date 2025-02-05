@@ -2,6 +2,10 @@
 module.exports = {
   ignoredRouteFiles: ["**/.*"],
   serverModuleFormat: "cjs",
+  serverBuildPath: "build/server/index.js",
+  serverMainFields: ["main", "module"],
+  serverMinify: false,
+  serverPlatform: "node",
   serverDependenciesToBundle: [
     /^@remix-run\/.*/,
     /^@vercel\/.*/,
@@ -13,5 +17,7 @@ module.exports = {
     v2_meta: true,
     v2_normalizeFormMethod: true,
     v2_routeConvention: true,
-  }
+  },
+  publicPath: "/build/",
+  assetsBuildDirectory: "public/build"
 }; 
