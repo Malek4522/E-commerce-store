@@ -117,10 +117,10 @@ export const Footer = ({ className }: FooterProps) => {
             </FadeIn>
             <FadeIn className={styles.bottomBar} duration={1.8}>
                 <Link to="/" className={styles.logo}>
-                    MZ Prestige
+                    MZ boutique 
                 </Link>
                 <div className={styles.copyright}>
-                    <span>© {new Date().getFullYear()} MZ Prestige. All rights reserved.</span>
+                    <span>© {new Date().getFullYear()} MZ boutique . All rights reserved.</span>
                 </div>
             </FadeIn>
         </footer>

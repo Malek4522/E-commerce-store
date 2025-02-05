@@ -2,22 +2,41 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const mongoose = require('mongoose');
 
+// Validate status transition
+const isValidStatusTransition = (currentStatus, newStatus) => {
+    const validTransitions = {
+        'waiting': ['processing', 'canceled'],
+        'processing': ['shipped', 'canceled'],
+        'shipped': ['delivered', 'canceled'],
+        'delivered': ['canceled'],
+        'canceled': ['waiting'] // only allow reactivating to waiting state
+    };
+    
+    return validTransitions[currentStatus]?.includes(newStatus) || false;
+};
+
 // Create a new order
 exports.createOrder = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { productId, color, size, fullName, phoneNumber, state, region, delivery, status } = req.body;
 
         // Validate product existence
-        const product = await Product.findById(productId);
+        const product = await Product.findById(productId).session(session);
         if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
+            throw new Error('Product not found');
         }
 
         // Check if the product has enough stock for the requested variant
         const variant = product.variants.find(v => v.color === color && v.size === size);
         if (!variant || variant.quantity === 0) {
-            return res.status(400).json({ message: 'Insufficient stock for the requested variant' });
+            throw new Error('Insufficient stock for the requested variant');
         }
+
+        // Update variant quantity using the product method
+        await product.updateVariantQuantity(color, size, variant.quantity - 1, session);
 
         const order = new Order({
             product: productId,
@@ -31,20 +50,27 @@ exports.createOrder = async (req, res) => {
             status: status || 'waiting'
         });
 
-        await order.save();
+        await order.save({ session });
         
         // Populate the product field before sending response
-        const populatedOrder = await Order.findById(order._id).populate('product');
+        const populatedOrder = await Order.findById(order._id)
+            .populate('product')
+            .session(session);
+        
+        await session.commitTransaction();
         
         res.status(201).json({
             success: true,
             data: populatedOrder
         });
     } catch (error) {
+        await session.abortTransaction();
         res.status(400).json({
             success: false,
             message: error.message
         });
+    } finally {
+        session.endSession();
     }
 };
 
@@ -92,65 +118,120 @@ exports.getOrder = async (req, res) => {
     }
 };
 
-// Update order status
+// Update order
 exports.updateOrder = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { statusNumber, ...updateData } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findById(req.params.id).session(session);
 
         if (!order) {
-            return res.status(404).json({
-                success: false,
-                message: 'Order not found'
-            });
+            throw new Error('Order not found');
         }
 
-        // If statusNumber is provided, update status using the special method
+        // Handle status update
         if (statusNumber !== undefined) {
-            await order.updateStatusByNumber(statusNumber);
+            const previousStatus = order.status;
+            const newStatus = await order.updateStatusByNumber(statusNumber);
+            
+            // Validate status transition
+            if (!isValidStatusTransition(previousStatus, newStatus)) {
+                throw new Error(`Invalid status transition from ${previousStatus} to ${newStatus}`);
+            }
+
+            // Handle quantity changes only if status actually changed
+            if (previousStatus !== newStatus) {
+                const product = await Product.findById(order.product).session(session);
+                if (!product) {
+                    throw new Error('Associated product not found');
+                }
+
+                const variant = product.variants.find(v => v.color === order.color && v.size === order.size);
+                
+                // Case 1: Changing to canceled - add quantity back
+                if (newStatus === 'canceled') {
+                    // If variant doesn't exist anymore, create it with quantity 1
+                    const newQuantity = variant ? variant.quantity + 1 : 1;
+                    await product.updateVariantQuantity(order.color, order.size, newQuantity, session);
+                }
+                // Case 2: Changing from canceled to another status - subtract quantity
+                else if (previousStatus === 'canceled') {
+                    if (!variant || variant.quantity === 0) {
+                        throw new Error('Insufficient stock for reactivating order');
+                    }
+                    await product.updateVariantQuantity(order.color, order.size, variant.quantity - 1, session);
+                }
+            }
         }
 
         // Update other fields if provided
         if (Object.keys(updateData).length > 0) {
             Object.assign(order, updateData);
-            await order.save();
+            await order.save({ session });
         }
+
+        await session.commitTransaction();
 
         res.status(200).json({
             success: true,
             data: order
         });
     } catch (error) {
+        await session.abortTransaction();
         res.status(400).json({
             success: false,
             message: error.message
         });
+    } finally {
+        session.endSession();
     }
 };
 
 // Delete order
 exports.deleteOrder = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findById(req.params.id)
+            .populate('product')
+            .session(session);
 
         if (!order) {
-            return res.status(404).json({
-                success: false,
-                message: 'Order not found'
-            });
+            throw new Error('Order not found');
         }
 
-        await Order.deleteOne({ _id: order._id });
+        // Handle quantity changes before deleting
+        if (order.status !== 'canceled' && order.product) {
+            const variant = order.product.variants.find(v => v.color === order.color && v.size === order.size);
+            // Only add quantity back if the variant still exists
+            if (variant) {
+                await order.product.updateVariantQuantity(
+                    order.color, 
+                    order.size, 
+                    variant.quantity + 1,
+                    session
+                );
+            }
+        }
+
+        await Order.deleteOne({ _id: order._id }).session(session);
+        await session.commitTransaction();
 
         res.status(200).json({
             success: true,
             message: 'Order deleted successfully'
         });
     } catch (error) {
+        await session.abortTransaction();
         res.status(500).json({
             success: false,
             message: error.message
         });
+    } finally {
+        session.endSession();
     }
 };
 

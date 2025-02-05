@@ -99,13 +99,6 @@ productSchema.methods.updateVariantQuantity = async function(size, color, quanti
     return await this.save();
 };
 
-// Method to update multiple variants at once (for store manager)
-productSchema.methods.updateVariants = async function(newVariants) {
-    // Replace all variants with the new set, excluding those with quantity 0
-    this.variants = newVariants.filter(v => v.quantity > 0);
-    return await this.save();
-};
-
 const Product = mongoose.model('Product', productSchema);
 
 module.exports = Product;

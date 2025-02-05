@@ -299,7 +299,7 @@ export default function ProductsRoute() {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [
-        { title: `${data?.category.name ?? 'Products'} | MZ Prestige` },
+        { title: `${data?.category.name ?? 'Products'} | MZ boutique ` },
         {
             name: 'description',
             content: data?.category.description ?? 'Browse our products',

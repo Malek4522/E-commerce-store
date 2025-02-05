@@ -920,10 +920,10 @@ export default function AdminProductsRoute() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: 'Products Management - MZ Prestige Admin' },
+        { title: 'Products Management - MZ boutique  Admin' },
         {
             name: 'description',
-            content: 'Manage products in MZ Prestige store',
+            content: 'Manage products in MZ boutique  store',
         },
     ];
 }; 

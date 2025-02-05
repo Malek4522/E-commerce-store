@@ -58,7 +58,7 @@ export default function ProductDetailsRoute() {
 export const meta: MetaFunction<typeof loader> = ({ data}) => {
     if (!data) {
         return [
-            { title: 'Produit Non Trouvé | MZ Prestige' },
+            { title: 'Produit Non Trouvé | MZ boutique ' },
             {
                 name: 'description',
                 content: 'Le produit demandé est introuvable.',
@@ -67,7 +67,7 @@ export const meta: MetaFunction<typeof loader> = ({ data}) => {
     }
 
     return [
-        { title: 'Détails du Produit | MZ Prestige' },
+        { title: 'Détails du Produit | MZ boutique ' },
         {
             name: 'description',
             content: 'Voir les détails du produit',

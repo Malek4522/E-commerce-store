@@ -6,7 +6,7 @@ export default function AboutUsPage() {
     return (
         <div className={styles.root}>
             <Reveal className={styles.aboutSection} direction="up" duration={3}>
-                <h1 className={styles.title}>We are MZ Prestige</h1>
+                <h1 className={styles.title}>We are MZ boutique </h1>
                 <div className={styles.subtitle}>Une boutique tenue par des femmes.</div>
                 <div className={styles.description}>
                     Nous proposons une superbe collection de robes, jupes et combinaisons. Tous nos
@@ -27,7 +27,7 @@ export default function AboutUsPage() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: 'About MZ Prestige' },
+        { title: 'About MZ boutique ' },
         {
             name: 'description',
             content: 'Essential home products for sustainable living',
