@@ -6,6 +6,7 @@ interface AuthContextType {
     login: (password: string) => Promise<boolean>;
     logout: () => void;
     checkAuth: () => Promise<boolean>;
+    token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -18,16 +19,15 @@ let authCache = {
 
 const AUTH_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes
 const AUTH_CHECK_DEBOUNCE = 2000; // 2 seconds debounce
-const TOKEN_KEY = 'admin_token'; // Key for localStorage token
 
 // Helper function to get auth headers
-const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem(TOKEN_KEY);
+const getAuthHeaders = (token: string | null): Record<string, string> => {
     return token ? { 'Authorization': `Bearer ${token}` } : { 'Authorization': '' };
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+    const [token, setToken] = useState<string | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -50,8 +50,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const response = await fetch(`${import.meta.env.VITE_API_URL}/product/admin`, {
                 credentials: 'include',
-                headers: getAuthHeaders()
+                headers: getAuthHeaders(token)
             });
+            
+            // If token expired or invalid, try to refresh
+            if (response.status === 401) {
+                try {
+                    const refreshResponse = await fetch(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (refreshResponse.ok) {
+                        const data = await refreshResponse.json();
+                        if (data.accessToken) {
+                            setToken(data.accessToken);
+                            authCache = {
+                                status: true,
+                                lastCheck: now
+                            };
+                            setIsAuthenticated(true);
+                            return true;
+                        }
+                    }
+                } catch {
+                    // If refresh fails, continue with normal flow
+                }
+            }
+
             const isValid = response.status !== 401;
             
             // Update cache
@@ -65,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch {
             return isAuthenticated;
         }
-    }, [isAuthenticated, isAdminRoute]);
+    }, [isAuthenticated, isAdminRoute, token]);
 
     // Check authentication status on mount and when route changes
     useEffect(() => {
@@ -87,10 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const success = response.ok;
             if (success) {
-                // Store token from response if available
                 const data = await response.json();
                 if (data.accessToken) {
-                    localStorage.setItem(TOKEN_KEY, data.accessToken);
+                    setToken(data.accessToken);
                 }
                 
                 authCache = {
@@ -107,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = () => {
-        localStorage.removeItem(TOKEN_KEY); // Clear stored token
+        setToken(null);
         authCache = {
             status: false,
             lastCheck: Date.now()
@@ -141,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     ...args[1],
                     headers: {
                         ...(args[1]?.headers || {}),
-                        ...getAuthHeaders()
+                        ...getAuthHeaders(token)
                     }
                 };
             }
@@ -154,10 +178,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => {
             window.fetch = originalFetch;
         };
-    }, [navigate, checkAuth]);
+    }, [navigate, checkAuth, token]);
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout, checkAuth }}>
+        <AuthContext.Provider value={{ isAuthenticated, login, logout, checkAuth, token }}>
             {children}
         </AuthContext.Provider>
     );
