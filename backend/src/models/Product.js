@@ -80,6 +80,11 @@ productSchema.virtual('sizes').get(function() {
 
 // Method to update variant quantity
 productSchema.methods.updateVariantQuantity = async function(size, color, quantityChange) {
+    
+    console.log(size, color);
+    console.log(this.variants);
+    
+    // Search for the variant with matching size and color
     const variant = this.variants.find(v => v.size === size && v.color === color);
     if (!variant) {
         throw new Error('Variant not found');

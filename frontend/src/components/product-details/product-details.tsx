@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import classNames from 'classnames';
 import { Accordion } from '../accordion/accordion';
 import { Breadcrumbs } from '../breadcrumbs/breadcrumbs';
@@ -81,7 +81,6 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
     const [_selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [_addToCartAttempted, _setAddToCartAttempted] = useState(false);
-    const [showOrderForm, setShowOrderForm] = useState(false);
     const [orderForm, setOrderForm] = useState({
         fullName: '',
         phoneNumber: '',
@@ -91,6 +90,30 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
         color: '',
         size: ''
     });
+
+    // Initialize the form with first available variant
+    useEffect(() => {
+        if (product.variants && product.variants.length > 0) {
+            const availableSizes = [...new Set(
+                product.variants
+                    .filter(v => v.quantity > 0)
+                    .map(v => v.size)
+            )];
+
+            if (availableSizes.length > 0) {
+                const firstSize = availableSizes[0];
+                const availableColors = product.variants
+                    .filter(v => v.size === firstSize && v.quantity > 0)
+                    .map(v => v.color);
+
+                setOrderForm(prev => ({
+                    ...prev,
+                    size: firstSize,
+                    color: availableColors[0] || ''
+                }));
+            }
+        }
+    }, [product.variants]);
 
     // Transform product links into the format expected by ProductImages
     const mediaItems: MediaItem[] = [
@@ -188,6 +211,16 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
             return;
         }
 
+        // Find the selected variant to verify it exists and has stock
+        const selectedVariant = product.variants.find(
+            v => v.color === orderForm.color && v.size === orderForm.size && v.quantity > 0
+        );
+
+        if (!selectedVariant) {
+            toast.error('Cette variante n\'est plus disponible');
+            return;
+        }
+
         try {
             setIsAddingToCart(true);
             await initializeApiForRequest(new Request(window.location.href));
@@ -200,13 +233,13 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                 },
                 body: JSON.stringify({
                     productId: product.id,
-                    color: orderForm.color,
-                    size: orderForm.size,
+                    color: selectedVariant.color,
+                    size: selectedVariant.size,
                     fullName: orderForm.fullName,
                     phoneNumber: orderForm.phoneNumber,
                     state: orderForm.state,
                     region: orderForm.region,
-                    delivery: orderForm.delivery
+                    delivery: orderForm.delivery === 'domicile' ? 'home' : 'center'
                 })
             });
 
@@ -216,13 +249,12 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
             }
 
             toast.success('Commande passée avec succès !');
-            setShowOrderForm(false);
             setOrderForm({
                 fullName: '',
                 phoneNumber: '',
                 state: 'Alger',
                 region: '',
-                delivery: 'domicile' as 'home',
+                delivery: 'domicile' as 'home' | 'center',
                 color: '',
                 size: ''
             });
@@ -231,36 +263,6 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
         } finally {
             setIsAddingToCart(false);
         }
-    };
-
-    const _handleBuyNow = () => {
-        if (isOutOfStock) {
-            toast.error('Produit en rupture de stock');
-            return;
-        }
-
-        // Get all available sizes first (those with quantity > 0)
-        const availableSizes = [...new Set(
-            product.variants
-                .filter(v => v.quantity > 0)
-                .map(v => v.size)
-        )];
-
-        if (availableSizes.length > 0) {
-            const firstSize = availableSizes[0];
-            // Get available colors for this size
-            const availableColors = product.variants
-                .filter(v => v.size === firstSize && v.quantity > 0)
-                .map(v => v.color);
-
-            setOrderForm(prev => ({
-                ...prev,
-                size: firstSize,
-                color: availableColors[0] || ''
-            }));
-        }
-
-        setShowOrderForm(true);
     };
 
     const isOutOfStock = !product.variants?.some(v => v.quantity > 0);
@@ -291,208 +293,186 @@ export function ProductDetails({ product, canonicalUrl: _canonicalUrl, breadcrum
                         )}
                     </div>
 
-                    <button
-                        className={classNames(styles.addToCartButton, {
-                            [styles.outOfStock]: isOutOfStock
-                        })}
-                        onClick={_handleBuyNow}
-                        disabled={isOutOfStock || isAddingToCart}
-                    >
-                        {isOutOfStock ? 'Out of stock' : isAddingToCart ? 'Processing...' : 'Buy Now'}
-                    </button>
+                    <div className={styles.orderForm}>
+                        <h2 className={styles.formTitle}>Complétez Votre Commande</h2>
+                        <form onSubmit={_handleSubmitOrder}>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="variant-matrix">Sélectionnez une variante</label>
+                                <div id="variant-matrix" className={styles.variantMatrix}>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                {[...new Set(product.variants.map(v => v.color))].map(color => (
+                                                    <th key={color}>{color}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {[...new Set(product.variants.map(v => v.size))].map(size => (
+                                                <tr key={size}>
+                                                    <th>{size}</th>
+                                                    {[...new Set(product.variants.map(v => v.color))].map(color => {
+                                                        const variant = product.variants.find(
+                                                            v => v.size === size && v.color === color
+                                                        );
+                                                        const isAvailable = variant && variant.quantity > 0;
+                                                        const isSelected = orderForm.size === size && orderForm.color === color;
 
-                    {showOrderForm && (
-                        <div className={styles.modalOverlay}>
-                            <div className={styles.modal}>
-                                <h2>Complétez Votre Commande</h2>
-                                <form onSubmit={_handleSubmitOrder}>
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="variant-matrix">Sélectionnez une variante</label>
-                                        <div id="variant-matrix" className={styles.variantMatrix}>
-                                            <table>
-                                                <thead>
-                                                    <tr>
-                                                        <th></th>
-                                                        {[...new Set(product.variants.map(v => v.color))].map(color => (
-                                                            <th key={color}>{color}</th>
-                                                        ))}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {[...new Set(product.variants.map(v => v.size))].map(size => (
-                                                        <tr key={size}>
-                                                            <th>{size}</th>
-                                                            {[...new Set(product.variants.map(v => v.color))].map(color => {
-                                                                const variant = product.variants.find(
-                                                                    v => v.size === size && v.color === color
-                                                                );
-                                                                const isAvailable = variant && variant.quantity > 0;
-                                                                const isSelected = orderForm.size === size && orderForm.color === color;
-
-                                                                return (
-                                                                    <td key={`${size}-${color}`}>
-                                                                        <button
-                                                                            type="button"
-                                                                            className={classNames(styles.variantCell, {
-                                                                                [styles.available]: isAvailable,
-                                                                                [styles.selected]: isSelected,
-                                                                                [styles.unavailable]: !isAvailable
-                                                                            })}
-                                                                            onClick={() => {
-                                                                                if (isAvailable) {
-                                                                                    setOrderForm(prev => ({
-                                                                                        ...prev,
-                                                                                        size,
-                                                                                        color
-                                                                                    }));
-                                                                                }
-                                                                            }}
-                                                                            disabled={!isAvailable}
-                                                                        >
-                                                                            {isAvailable ? (
-                                                                                isSelected ? '✓' : ''
-                                                                            ) : (
-                                                                                '×'
-                                                                            )}
-                                                                        </button>
-                                                                    </td>
-                                                                );
-                                                            })}
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="fullName">Nom Complet</label>
-                                        <input
-                                            type="text"
-                                            id="fullName"
-                                            name="fullName"
-                                            value={orderForm.fullName}
-                                            onChange={_handleOrderFormChange}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="phoneNumber">Numéro de Téléphone</label>
-                                        <input
-                                            type="tel"
-                                            id="phoneNumber"
-                                            name="phoneNumber"
-                                            value={orderForm.phoneNumber}
-                                            onChange={_handleOrderFormChange}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="state">Wilaya</label>
-                                        <select
-                                            id="state"
-                                            name="state"
-                                            value={orderForm.state}
-                                            onChange={_handleOrderFormChange}
-                                            required
-                                        >
-                                            {WILAYAS.map((wilaya: string) => (
-                                                <option key={wilaya} value={wilaya}>
-                                                    {wilaya}
-                                                </option>
+                                                        return (
+                                                            <td key={`${size}-${color}`}>
+                                                                <button
+                                                                    type="button"
+                                                                    className={classNames(styles.variantCell, {
+                                                                        [styles.available]: isAvailable,
+                                                                        [styles.selected]: isSelected,
+                                                                        [styles.unavailable]: !isAvailable
+                                                                    })}
+                                                                    onClick={() => {
+                                                                        if (isAvailable) {
+                                                                            setOrderForm(prev => ({
+                                                                                ...prev,
+                                                                                size,
+                                                                                color
+                                                                            }));
+                                                                        }
+                                                                    }}
+                                                                    disabled={!isAvailable}
+                                                                >
+                                                                    {isAvailable ? (
+                                                                        isSelected ? '✓' : ''
+                                                                    ) : (
+                                                                        '×'
+                                                                    )}
+                                                                </button>
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
                                             ))}
-                                        </select>
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="region">Région</label>  
-                                        <input
-                                            type="text"
-                                            id="region"
-                                            name="region"
-                                            value={orderForm.region}
-                                            onChange={_handleOrderFormChange}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="delivery">Type de Livraison</label>
-                                        <div id="delivery" className={styles.deliveryOptions}>
-                                            <button
-                                                type="button"
-                                                className={classNames({
-                                                    [styles.selected]: orderForm.delivery === 'home',
-                                                    [styles.home]: true
-                                                })}
-                                                onClick={() => _handleOrderFormChange({
-                                                    target: { name: 'delivery', value: 'home' }
-                                                } as any)}
-                                            >
-                                                Livraison à Domicile
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className={classNames({
-                                                    [styles.selected]: orderForm.delivery === 'center',
-                                                    [styles.center]: true
-                                                })}
-                                                onClick={() => _handleOrderFormChange({
-                                                    target: { name: 'delivery', value: 'center' }
-                                                } as any)}
-                                            >
-                                                Retrait au Centre
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Add Price Summary */}
-                                    <div className={styles.priceSummary}>
-                                        <div className={styles.priceRow}>
-                                            <span>Product Price:</span>
-                                            <span>{formatPrice(basePrice)}</span>
-                                        </div>
-                                        {deliveryPrice !== null && (
-                                            <div className={styles.priceRow}>
-                                                <span>Prix de Livraison:</span>
-                                                <span>{formatPrice(deliveryPrice)}</span>
-                                            </div>
-                                        )}
-                                        {totalPrice !== null && (
-                                            <div className={`${styles.priceRow} ${styles.total}`}>
-                                                <span>Prix Total:</span>
-                                                <span>{formatPrice(totalPrice)}</span>
-                                            </div>
-                                        )}
-                                        {deliveryPrice === null && (
-                                            <div className={styles.warning}>
-                                                La livraison n&apos;est pas disponible dans cette région
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className={styles.modalActions}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowOrderForm(false)}
-                                            className={styles.cancelButton}
-                                        >
-                                            Annuler
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={isAddingToCart}
-                                            className={styles.submitButton}
-                                        >
-                                            {isAddingToCart ? 'Processing...' : 'Commander'}
-                                        </button>
-                                    </div>
-                                </form>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                    )}
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="fullName">Nom Complet</label>
+                                <input
+                                    type="text"
+                                    id="fullName"
+                                    name="fullName"
+                                    value={orderForm.fullName}
+                                    onChange={_handleOrderFormChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="phoneNumber">Numéro de Téléphone</label>
+                                <input
+                                    type="tel"
+                                    id="phoneNumber"
+                                    name="phoneNumber"
+                                    value={orderForm.phoneNumber}
+                                    onChange={_handleOrderFormChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="state">Wilaya</label>
+                                <select
+                                    id="state"
+                                    name="state"
+                                    value={orderForm.state}
+                                    onChange={_handleOrderFormChange}
+                                    required
+                                >
+                                    {WILAYAS.map((wilaya: string) => (
+                                        <option key={wilaya} value={wilaya}>
+                                            {wilaya}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="region">Région</label>  
+                                <input
+                                    type="text"
+                                    id="region"
+                                    name="region"
+                                    value={orderForm.region}
+                                    onChange={_handleOrderFormChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="delivery">Type de Livraison</label>
+                                <div id="delivery" className={styles.deliveryOptions}>
+                                    <button
+                                        type="button"
+                                        className={classNames({
+                                            [styles.selected]: orderForm.delivery === 'home',
+                                            [styles.home]: true
+                                        })}
+                                        onClick={() => _handleOrderFormChange({
+                                            target: { name: 'delivery', value: 'home' }
+                                        } as any)}
+                                    >
+                                        Livraison à Domicile
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={classNames({
+                                            [styles.selected]: orderForm.delivery === 'center',
+                                            [styles.center]: true
+                                        })}
+                                        onClick={() => _handleOrderFormChange({
+                                            target: { name: 'delivery', value: 'center' }
+                                        } as any)}
+                                    >
+                                        Retrait au Centre
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className={styles.priceSummary}>
+                                <div className={styles.priceRow}>
+                                    <span>Product Price:</span>
+                                    <span>{formatPrice(basePrice)}</span>
+                                </div>
+                                {deliveryPrice !== null && (
+                                    <div className={styles.priceRow}>
+                                        <span>Prix de Livraison:</span>
+                                        <span>{formatPrice(deliveryPrice)}</span>
+                                    </div>
+                                )}
+                                {totalPrice !== null && (
+                                    <div className={`${styles.priceRow} ${styles.total}`}>
+                                        <span>Prix Total:</span>
+                                        <span>{formatPrice(totalPrice)}</span>
+                                    </div>
+                                )}
+                                {deliveryPrice === null && (
+                                    <div className={styles.warning}>
+                                        La livraison n&apos;est pas disponible dans cette région
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.formActions}>
+                                <button
+                                    type="submit"
+                                    disabled={isAddingToCart || isOutOfStock}
+                                    className={styles.submitButton}
+                                >
+                                    {isOutOfStock ? 'Out of stock' : isAddingToCart ? 'Processing...' : 'Commander'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
 
                     <div className={styles.accordionSection}>
                         <Accordion

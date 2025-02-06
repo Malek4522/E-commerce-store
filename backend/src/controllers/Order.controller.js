@@ -22,7 +22,6 @@ exports.createOrder = async (req, res) => {
 
     try {
         const { productId, color, size, fullName, phoneNumber, state, region, delivery, status } = req.body;
-
         // Validate product existence
         const product = await Product.findById(productId).session(session);
         if (!product) {
@@ -35,8 +34,8 @@ exports.createOrder = async (req, res) => {
             throw new Error('Insufficient stock for the requested variant');
         }
 
-        // Update variant quantity using the product method
-        await product.updateVariantQuantity(color, size, variant.quantity - 1, session);
+        // Update variant quantity - pass -1 as the change in quantity
+        await product.updateVariantQuantity(variant.size, variant.color, -1, session);
 
         const order = new Order({
             product: productId,
@@ -152,16 +151,16 @@ exports.updateOrder = async (req, res) => {
                 
                 // Case 1: Changing to canceled - add quantity back
                 if (newStatus === 'canceled') {
-                    // If variant doesn't exist anymore, create it with quantity 1
-                    const newQuantity = variant ? variant.quantity + 1 : 1;
-                    await product.updateVariantQuantity(order.color, order.size, newQuantity, session);
+                    // Add 1 back to quantity
+                    await product.updateVariantQuantity(order.size, order.color, 1, session);
                 }
                 // Case 2: Changing from canceled to another status - subtract quantity
                 else if (previousStatus === 'canceled') {
                     if (!variant || variant.quantity === 0) {
                         throw new Error('Insufficient stock for reactivating order');
                     }
-                    await product.updateVariantQuantity(order.color, order.size, variant.quantity - 1, session);
+                    // Subtract 1 from quantity
+                    await product.updateVariantQuantity(order.size, order.color, -1, session);
                 }
             }
         }
@@ -208,10 +207,11 @@ exports.deleteOrder = async (req, res) => {
             const variant = order.product.variants.find(v => v.color === order.color && v.size === order.size);
             // Only add quantity back if the variant still exists
             if (variant) {
+                // Add 1 back to quantity
                 await order.product.updateVariantQuantity(
+                    order.size,
                     order.color, 
-                    order.size, 
-                    variant.quantity + 1,
+                    1,
                     session
                 );
             }
