@@ -7,6 +7,7 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 import { Link, useNavigate, useSearchParams } from '@remix-run/react';
 import { AuthProvider } from '../../api/auth-context';
 import { toast } from '~/src/components/toast/toast';
+import axios from 'axios';
 
 // Utility functions
 const getYouTubeVideoId = (url: string) => {
@@ -250,38 +251,67 @@ function EditProductModal({
 
         setUploading(true);
         const uploadPromises = Array.from(files).map(async (file) => {
-            const formData = new FormData();
-            formData.append('image', file);
-
             try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`, {
-                    method: 'POST',
-                    body: formData
+                // Convert file to base64
+                const base64String = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                        const base64 = reader.result as string;
+                        // Extract the base64 data without the prefix
+                        const base64Data = base64.split(',')[1];
+                        resolve(base64Data);
+                    };
+                    reader.onerror = error => reject(error);
                 });
 
-                const data = await response.json();
-                if (data.success) {
+                // Create form data
+                const formData = new FormData();
+                formData.append('image', base64String);
+                
+                const response = await axios.post(
+                    `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    }
+                );
+
+                if (response.data.success) {
                     const newImage: ProductLink = {
-                        url: data.data.url,
+                        url: response.data.data.url,
                         type: 'image'
                     };
                     return newImage;
                 }
+
+                toast.error('Upload failed: Image upload was not successful');
                 return null;
             } catch (error) {
-                toast.error('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+                if (axios.isAxiosError(error)) {
+                    toast.error('Upload failed: ' + (error.response?.data?.error?.message || error.message));
+                } else {
+                    toast.error('Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+                }
                 return null;
             }
         });
 
-        const results = await Promise.all(uploadPromises);
-        const uploadedImages = results.filter((img): img is ProductLink => img !== null);
-        
-        setEditedProduct(prev => ({
-            ...prev,
-            links: [...prev.links, ...uploadedImages]
-        }));
-        setUploading(false);
+        try {
+            const results = await Promise.all(uploadPromises);
+            const uploadedImages = results.filter((img): img is ProductLink => img !== null);
+            
+            setEditedProduct(prev => ({
+                ...prev,
+                links: [...prev.links, ...uploadedImages]
+            }));
+        } catch (error) {
+            console.error('Error in Promise.all:', error);
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleAddVideo = () => {
