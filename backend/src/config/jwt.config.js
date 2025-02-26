@@ -20,7 +20,7 @@ if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
-      domain: process.env.NODE_ENV === 'production' ? 'mz-prestige-backend.onrender.com' : undefined,
+      domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     }
   }; 
