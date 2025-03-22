@@ -15,6 +15,13 @@ A modern, full-stack e-commerce platform built with React, Remix, TypeScript, an
   - Admin dashboard
 - **Performance Optimized**: Fast page loads and optimized bundle sizes
 
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+  <img src="frontend/src/assets/web2.png" width="200">
+  <img src="frontend/src/assets/web3.png" width="200">
+  <img src="frontend/src/assets/web4.png" width="200">
+  <img src="frontend/src/assets/web5.png" width="200">
+</div>
+
 ## 🚀 Getting Started
 
 ### Prerequisites
