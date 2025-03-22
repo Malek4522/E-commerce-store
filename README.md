@@ -83,30 +83,6 @@ npm run start:prod
 - Prettier for code formatting
 - TypeScript for type safety
 
-## 📁 Project Structure
-
-```
-frontend/
-├── app/              # Remix application routes and components
-├── src/              # Source files
-│   ├── components/   # Reusable React components
-│   ├── hooks/        # Custom React hooks
-│   └── utils/        # Utility functions
-├── public/           # Static files
-└── build/            # Production build output
-```
-
-## 🔧 Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Create production build
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run typecheck` - Run TypeScript type checking
-- `npm run prettier:check` - Check code formatting
-- `npm run build:prod` - Create production build with type checking and linting
-- `npm run clean` - Clean build artifacts
-
 ## 🚀 Deployment
 
 This project is configured for deployment on Render.com:
@@ -122,12 +98,6 @@ This project is configured for deployment on Render.com:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Contact
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+For any inquiries or support, please contact us at abdmalek69.2004@gmail.com.
